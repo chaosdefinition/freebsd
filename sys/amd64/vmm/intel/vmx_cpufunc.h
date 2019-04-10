@@ -54,6 +54,16 @@ struct vmcs;
 	"2:	mov $0, %[error];"					\
 	"3:"
 
+#define	VMX_SET_ERROR_CODE_NEW(error) do {				\
+	int z;								\
+	__asm __volatile ("movl $0, %%eax;" ::: "eax");			\
+	__asm __volatile ("movl $0, %%ecx;" ::: "ecx");			\
+	__asm __volatile ("setc %%al;" : "=a" (error));			\
+	__asm __volatile ("setz %%cl;" : "=c" (z));			\
+	__asm __volatile ("shll $1, %0;" : "=c" (z));			\
+	__asm __volatile ("cmovzl %1, %0;" : "=a" (error) : "c" (z));	\
+} while (0)
+
 /* returns 0 on success and non-zero on failure */
 static __inline int
 vmxon(char *region)
@@ -63,10 +73,10 @@ vmxon(char *region)
 
 	addr = vtophys(region);
 	__asm __volatile("vmxon %[addr];"
-			 VMX_SET_ERROR_CODE
-			 : [error] "=r" (error)
+			 :
 			 : [addr] "m" (*(uint64_t *)&addr)
 			 : "memory");
+	VMX_SET_ERROR_CODE_NEW(error);
 
 	return (error);
 }
@@ -80,10 +90,10 @@ vmclear(struct vmcs *vmcs)
 
 	addr = vtophys(vmcs);
 	__asm __volatile("vmclear %[addr];"
-			 VMX_SET_ERROR_CODE
-			 : [error] "=r" (error)
+			 :
 			 : [addr] "m" (*(uint64_t *)&addr)
 			 : "memory");
+	VMX_SET_ERROR_CODE_NEW(error);
 	return (error);
 }
 
@@ -109,10 +119,10 @@ vmptrld(struct vmcs *vmcs)
 
 	addr = vtophys(vmcs);
 	__asm __volatile("vmptrld %[addr];"
-			 VMX_SET_ERROR_CODE
-			 : [error] "=r" (error)
+			 :
 			 : [addr] "m" (*(uint64_t *)&addr)
 			 : "memory");
+	VMX_SET_ERROR_CODE_NEW(error);
 	return (error);
 }
 
@@ -122,10 +132,10 @@ vmwrite(uint64_t reg, uint64_t val)
 	int error;
 
 	__asm __volatile("vmwrite %[val], %[reg];"
-			 VMX_SET_ERROR_CODE
-			 : [error] "=r" (error)
+			 :
 			 : [val] "r" (val), [reg] "r" (reg)
 			 : "memory");
+	VMX_SET_ERROR_CODE_NEW(error);
 
 	return (error);
 }
@@ -136,10 +146,10 @@ vmread(uint64_t r, uint64_t *addr)
 	int error;
 
 	__asm __volatile("vmread %[r], %[addr];"
-			 VMX_SET_ERROR_CODE
-			 : [error] "=r" (error)
+			 :
 			 : [r] "r" (r), [addr] "m" (*addr)
 			 : "memory");
+	VMX_SET_ERROR_CODE_NEW(error);
 
 	return (error);
 }
@@ -186,10 +196,10 @@ invvpid(uint64_t type, struct invvpid_desc desc)
 	int error;
 
 	__asm __volatile("invvpid %[desc], %[type];"
-			 VMX_SET_ERROR_CODE
-			 : [error] "=r" (error)
+			 :
 			 : [desc] "m" (desc), [type] "r" (type)
 			 : "memory");
+	VMX_SET_ERROR_CODE_NEW(error);
 
 	if (error)
 		panic("invvpid error %d", error);
@@ -209,10 +219,10 @@ invept(uint64_t type, struct invept_desc desc)
 	int error;
 
 	__asm __volatile("invept %[desc], %[type];"
-			 VMX_SET_ERROR_CODE
-			 : [error] "=r" (error)
+			 :
 			 : [desc] "m" (desc), [type] "r" (type)
 			 : "memory");
+	VMX_SET_ERROR_CODE_NEW(error);
 
 	if (error)
 		panic("invept error %d", error);
