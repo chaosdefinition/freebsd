@@ -12,6 +12,15 @@
 
 .include <bsd.compiler.mk>
 
+#
+# Specify --sysroot when both DESTDIR and NO_SYSTEM_HEADERS are defined; this
+# allows us to build world using in-tree headers instead of default system
+# headers.
+#
+.if defined(DESTDIR) && defined(NO_SYSTEM_HEADERS)
+CFLAGS+= --sysroot=${DESTDIR}
+.endif
+
 # the default is gnu99 for now
 CSTD?=		gnu99
 
