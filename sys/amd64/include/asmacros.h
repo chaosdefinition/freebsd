@@ -318,4 +318,6 @@ X\vec_name:
 .popsection
 #endif /* __STDC__ */
 
+#include <machine/venkman.h>
+
 #endif /* !_MACHINE_ASMACROS_H_ */

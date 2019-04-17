@@ -98,4 +98,6 @@
 #define __FBSDID(s)	/* nothing */
 #endif /* !STRIP_FBSDID */
 
+#include <machine/venkman.h>
+
 #endif /* !_MACHINE_ASM_H_ */
