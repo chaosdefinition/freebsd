@@ -74,6 +74,22 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 # define FORCE_CODE_SECTION_ALIGN
 #endif
 
+/* Disable adding (unaligned) pieces of code into init and fini sections */
+#ifdef VENKMAN
+#ifdef INIT_SECTION_ASM_OP
+#undef INIT_SECTION_ASM_OP
+#endif
+#ifdef FINI_SECTION_ASM_OP
+#undef FINI_SECTION_ASM_OP
+#endif
+#ifndef HAS_INIT_SECTION
+#define HAS_INIT_SECTION
+#endif
+#ifndef HAS_FINI_SECTION
+#define HAS_FINI_SECTION
+#endif
+#endif
+
 #ifndef CRT_CALL_STATIC_FUNCTION
 # define CRT_CALL_STATIC_FUNCTION(SECTION_OP, FUNC)	\
 static void __attribute__((__used__))			\
