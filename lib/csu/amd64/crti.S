@@ -27,14 +27,22 @@
 __FBSDID("$FreeBSD$");
 
 	.section .init,"ax",@progbits
+#ifdef VENKMAN
+	.align	BUNDLE_SIZE
+#else
 	.align	4
+#endif
 	.globl	_init
 	.type	_init,@function
 _init:
 	subq	$8,%rsp
 
 	.section .fini,"ax",@progbits
+#ifdef VENKMAN
+	.align	BUNDLE_SIZE
+#else
 	.align	4
+#endif
 	.globl	_fini
 	.type	_fini,@function
 _fini:
