@@ -49,6 +49,7 @@ __FBSDID("$FreeBSD$");
 #include "SYS.h"
 
 ENTRY(setjmp)
+	VENKMAN_PAD(5)
 	pushq	%rdi
 	movq	%rdi,%rcx
 	movq	$1,%rdi			/* SIG_BLOCK       */
@@ -56,6 +57,7 @@ ENTRY(setjmp)
 	leaq	72(%rcx),%rdx		/* 9,10; (sigset_t*)oset */
 	/* stack is 16-byte aligned */
 	call	__libc_sigprocmask
+	VENKMAN_PAD(1)
 	popq	%rdi
 	movq	%rdi,%rcx
 	movq	0(%rsp),%rdx		/* retval */
@@ -70,7 +72,7 @@ ENTRY(setjmp)
 	fnstcw	64(%rcx)		/* 8; fpu cw */
 	stmxcsr	68(%rcx)		/*    and mxcsr */
 	xorq	%rax,%rax
-	ret
+	VENKMAN_RET
 END(setjmp)
 
 	WEAK_REFERENCE(__longjmp, longjmp)
@@ -83,6 +85,7 @@ ENTRY(__longjmp)
 	movq	$0,%rdx			/* (sigset_t*)oset */
 	subq	$0x8,%rsp		/* make the stack 16-byte aligned */
 	call	__libc_sigprocmask
+	VENKMAN_PAD(3)
 	addq	$0x8,%rsp
 	popq	%rsi
 	popq	%rdi			/* jmpbuf */
@@ -94,6 +97,7 @@ ENTRY(__longjmp)
 	movl	-4(%rsp),%edi
 	andl	$0x3f,%edi
 	xorl	%eax,%edi
+	VENKMAN_PAD(1)
 	movl	%edi,-4(%rsp)
 	ldmxcsr -4(%rsp)
 	movq	%rsi,%rax		/* retval */
@@ -102,6 +106,7 @@ ENTRY(__longjmp)
 	movq	16(%rdx),%rsp
 	movq	24(%rdx),%rbp
 	movq	32(%rdx),%r12
+	VENKMAN_PAD(5)
 	movq	40(%rdx),%r13
 	movq	48(%rdx),%r14
 	movq	56(%rdx),%r15
@@ -109,8 +114,9 @@ ENTRY(__longjmp)
 	testq	%rax,%rax
 	jnz	1f
 	incq	%rax
-1:	movq	%rcx,0(%rsp)
-	ret
+1:
+	movq	%rcx,0(%rsp)
+	VENKMAN_RET
 END(__longjmp)
 
 	.section .note.GNU-stack,"",%progbits

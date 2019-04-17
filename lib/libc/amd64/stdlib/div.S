@@ -14,7 +14,7 @@ ENTRY(div)
 	idivl	%esi
 	salq	$32,%rdx
 	orq	%rdx,%rax
-	ret
+	VENKMAN_RET
 END(div)
 
 	.section .note.GNU-stack,"",%progbits

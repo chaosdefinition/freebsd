@@ -37,12 +37,13 @@ __FBSDID("$FreeBSD$");
 	WEAK_REFERENCE(__sys_getcontext, _getcontext)
 	WEAK_REFERENCE(__sys_getcontext, getcontext)
 ENTRY(__sys_getcontext)
+	VENKMAN_PAD(16)
 	movq	(%rsp),%rsi	/* save getcontext return address */
 	mov	$SYS_getcontext,%rax
 	KERNCALL
 	jb	HIDENAME(cerror)
 	addq	$8,%rsp		/* remove stale (setcontext) return address */
-	jmp	*%rsi		/* restore return address */
+	VENKMAN_JMPr(rsi)	/* restore return address */
 END(__sys_getcontext)
 
 	.section .note.GNU-stack,"",%progbits

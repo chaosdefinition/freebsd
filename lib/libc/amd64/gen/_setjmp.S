@@ -47,6 +47,7 @@ __FBSDID("$FreeBSD$");
  */
 
 ENTRY(_setjmp)
+	VENKMAN_PAD(2)
 	movq	%rdi,%rax
 	movq	0(%rsp),%rdx		/* retval */
 	movq	%rdx, 0(%rax)		/* 0; retval */
@@ -60,7 +61,7 @@ ENTRY(_setjmp)
 	fnstcw	64(%rax)		/* 8; fpu cw */
 	stmxcsr	68(%rax)		/*    and mxcsr */
 	xorq	%rax,%rax
-	ret
+	VENKMAN_RET
 END(_setjmp)
 
 	WEAK_REFERENCE(___longjmp, _longjmp)
@@ -75,6 +76,7 @@ ENTRY(___longjmp)
 	xorl	%eax,%edi
 	movl	%edi,-4(%rsp)
 	ldmxcsr -4(%rsp)
+	VENKMAN_PAD(2)
 	movq	%rsi,%rax		/* retval */
 	movq	0(%rdx),%rcx
 	movq	8(%rdx),%rbx
@@ -83,13 +85,14 @@ ENTRY(___longjmp)
 	movq	32(%rdx),%r12
 	movq	40(%rdx),%r13
 	movq	48(%rdx),%r14
+	VENKMAN_PAD(13)
 	movq	56(%rdx),%r15
 	fldcw	64(%rdx)
 	testq	%rax,%rax
 	jnz	1f
 	incq	%rax
 1:	movq	%rcx,0(%rsp)
-	ret
+	VENKMAN_RET
 END(___longjmp)
 
 	.section .note.GNU-stack,"",%progbits

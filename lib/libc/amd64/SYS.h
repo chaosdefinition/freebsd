@@ -41,14 +41,16 @@
 #define	RSYSCALL(name)	ENTRY(__sys_##name);				\
 			WEAK_REFERENCE(__sys_##name, name);		\
 			WEAK_REFERENCE(__sys_##name, _##name);		\
+			VENKMAN_PAD(22);				\
 			mov $SYS_##name,%eax; KERNCALL;			\
-			jb HIDENAME(cerror); ret;			\
+			jb HIDENAME(cerror); VENKMAN_RET;		\
 			END(__sys_##name)
 
 #define	PSEUDO(name)	ENTRY(__sys_##name);				\
 			WEAK_REFERENCE(__sys_##name, _##name);		\
+			VENKMAN_PAD(22);				\
 			mov $SYS_##name,%eax; KERNCALL;			\
-			jb HIDENAME(cerror); ret;			\
+			jb HIDENAME(cerror); VENKMAN_RET;		\
 			END(__sys_##name)
 
 #define	KERNCALL	movq %rcx, %r10; syscall

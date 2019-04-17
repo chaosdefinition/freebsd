@@ -12,7 +12,7 @@ ENTRY(lldiv)
 	movq	%rdi,%rax
 	cqto
 	idivq	%rsi
-	ret
+	VENKMAN_RET
 END(lldiv)
 
 	.section .note.GNU-stack,"",%progbits

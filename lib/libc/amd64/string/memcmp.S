@@ -32,13 +32,16 @@
 __FBSDID("$FreeBSD$");
 
 ENTRY(memcmp)
+	VENKMAN_PAD(22)
 	cmpq	$16,%rdx
 	jae	5f
 1:
+	VENKMAN_PAD(21)
 	testq	%rdx,%rdx
 	je	3f
 	xorl	%ecx,%ecx
 2:
+	VENKMAN_PAD(1)
 	movzbl	(%rdi,%rcx,1),%eax
 	movzbl	(%rsi,%rcx,1),%r8d
 	cmpb	%r8b,%al
@@ -46,6 +49,7 @@ ENTRY(memcmp)
 	addq	$1,%rcx
 	cmpq	%rcx,%rdx
 	jz	3f
+	VENKMAN_PAD(1)
 	movzbl	(%rdi,%rcx,1),%eax
 	movzbl	(%rsi,%rcx,1),%r8d
 	cmpb	%r8b,%al
@@ -53,6 +57,7 @@ ENTRY(memcmp)
 	addq	$1,%rcx
 	cmpq	%rcx,%rdx
 	jz	3f
+	VENKMAN_PAD(1)
 	movzbl	(%rdi,%rcx,1),%eax
 	movzbl	(%rsi,%rcx,1),%r8d
 	cmpb	%r8b,%al
@@ -60,6 +65,7 @@ ENTRY(memcmp)
 	addq	$1,%rcx
 	cmpq	%rcx,%rdx
 	jz	3f
+	VENKMAN_PAD(1)
 	movzbl	(%rdi,%rcx,1),%eax
 	movzbl	(%rsi,%rcx,1),%r8d
 	cmpb	%r8b,%al
@@ -68,18 +74,22 @@ ENTRY(memcmp)
 	cmpq	%rcx,%rdx
 	jne	2b
 3:
+	VENKMAN_PAD(23)
 	xorl	%eax,%eax
-	ret
+	VENKMAN_RET
 4:
+	VENKMAN_PAD(22)
 	subl	%r8d,%eax
-	ret
+	VENKMAN_RET
 5:
+	VENKMAN_PAD(22)
 	cmpq	$32,%rdx
 	jae	7f
 6:
 	/*
 	 * 8 bytes
 	 */
+	VENKMAN_PAD(1)
 	movq	(%rdi),%r8
 	movq	(%rsi),%r9
 	cmpq	%r8,%r9
@@ -88,6 +98,7 @@ ENTRY(memcmp)
 	leaq	8(%rsi),%rsi
 	subq	$8,%rdx
 	cmpq	$8,%rdx
+	VENKMAN_PAD(15)
 	jae	6b
 	jl	1b
 	jmp	3b
@@ -95,6 +106,7 @@ ENTRY(memcmp)
 	/*
 	 * 32 bytes
 	 */
+	VENKMAN_PAD(1)
 	movq	(%rsi),%r8
 	movq	8(%rsi),%r9
 	subq	(%rdi),%r8
@@ -104,6 +116,7 @@ ENTRY(memcmp)
 
 	movq	16(%rsi),%r8
 	movq	24(%rsi),%r9
+	VENKMAN_PAD(3)
 	subq	16(%rdi),%r8
 	subq	24(%rdi),%r9
 	or	%r8,%r9
@@ -112,6 +125,7 @@ ENTRY(memcmp)
 	leaq	32(%rdi),%rdi
 	leaq	32(%rsi),%rsi
 	subq	$32,%rdx
+	VENKMAN_PAD(11)
 	cmpq	$32,%rdx
 	jae	7b
 	jnz	1b

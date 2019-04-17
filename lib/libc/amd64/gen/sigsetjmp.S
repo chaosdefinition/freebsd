@@ -54,6 +54,7 @@ __FBSDID("$FreeBSD$");
  */
 
 ENTRY(sigsetjmp)
+	VENKMAN_PAD(3)
 	movl	%esi,88(%rdi)		/* 11; savemask */
 	testl	%esi,%esi
 	jz	2f
@@ -61,11 +62,15 @@ ENTRY(sigsetjmp)
 	movq	%rdi,%rcx
 	movq	$1,%rdi			/* SIG_BLOCK       */
 	movq	$0,%rsi			/* (sigset_t*)set  */
+	VENKMAN_PAD(23)
 	leaq	72(%rcx),%rdx		/* 9,10 (sigset_t*)oset */
 	/* stack is 16-byte aligned */
 	call	__libc_sigprocmask
+	VENKMAN_PAD(31)
 	popq	%rdi
-2:	movq	%rdi,%rcx
+2:
+	VENKMAN_PAD(2)
+	movq	%rdi,%rcx
 	movq	0(%rsp),%rdx		/* retval */
 	movq	%rdx, 0(%rcx)		/* 0; retval */
 	movq	%rbx, 8(%rcx)		/* 1; rbx */
@@ -77,11 +82,12 @@ ENTRY(sigsetjmp)
 	movq	%r15,56(%rcx)		/* 7; r15 */
 	fnstcw	64(%rcx)		/* 8; fpu cw */
 	xorq	%rax,%rax
-	ret
+	VENKMAN_RET
 END(sigsetjmp)
 
 	WEAK_REFERENCE(__siglongjmp, siglongjmp)
 ENTRY(__siglongjmp)
+	VENKMAN_PAD(6)
 	cmpl	$0,88(%rdi)
 	jz	2f
 	movq	%rdi,%rdx
@@ -89,13 +95,17 @@ ENTRY(__siglongjmp)
 	pushq	%rsi
 	movq	$3,%rdi			/* SIG_SETMASK     */
 	leaq	72(%rdx),%rsi		/* (sigset_t*)set  */
+	VENKMAN_PAD(16)
 	movq	$0,%rdx			/* (sigset_t*)oset */
 	subq	$0x8,%rsp		/* make the stack 16-byte aligned */
 	call	__libc_sigprocmask
+	VENKMAN_PAD(26)
 	addq	$0x8,%rsp
 	popq	%rsi
 	popq	%rdi			/* jmpbuf */
-2:	movq	%rdi,%rdx
+2:
+	VENKMAN_PAD(3)
+	movq	%rdi,%rdx
 	movq	%rsi,%rax		/* retval */
 	movq	0(%rdx),%rcx
 	movq	8(%rdx),%rbx
@@ -103,6 +113,7 @@ ENTRY(__siglongjmp)
 	movq	24(%rdx),%rbp
 	movq	32(%rdx),%r12
 	movq	40(%rdx),%r13
+	VENKMAN_PAD(9)
 	movq	48(%rdx),%r14
 	movq	56(%rdx),%r15
 	fldcw	64(%rdx)
@@ -110,7 +121,7 @@ ENTRY(__siglongjmp)
 	jnz	1f
 	incq	%rax
 1:	movq	%rcx,0(%rsp)
-	ret
+	VENKMAN_RET
 END(__siglongjmp)
 
 	.section .note.GNU-stack,"",%progbits

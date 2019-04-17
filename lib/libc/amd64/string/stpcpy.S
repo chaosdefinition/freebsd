@@ -23,6 +23,7 @@ __FBSDID("$FreeBSD$");
 	.globl	stpcpy,__stpcpy
 ENTRY(stpcpy)
 __stpcpy:
+	VENKMAN_PAD(12)
 	movabsq $0x0101010101010101,%r8
 	movabsq $0x8080808080808080,%r9
 
@@ -31,6 +32,7 @@ __stpcpy:
 	 * Consider unrolling loop?
 	 */
 .Lalign:
+	VENKMAN_PAD(1)
 	testb	$7,%sil
 	je	.Lword_aligned
 	movb	(%rsi),%dl
@@ -40,11 +42,13 @@ __stpcpy:
 	testb	%dl,%dl
 	jne	.Lalign
 	movq	%rdi,%rax
+	VENKMAN_PAD(22)
 	dec	%rax
-	ret
+	VENKMAN_RET
 
 	.p2align 4
 .Lloop:
+	VENKMAN_PAD(25)
 	movq	%rdx,(%rdi)
 	addq	$8,%rdi
 .Lword_aligned:
@@ -63,6 +67,7 @@ __stpcpy:
 	movb	%dl,(%rdi)
 	testb	%dl,%dl		/* 1st byte == 0? */
 	je	.Ldone
+	VENKMAN_PAD(4)
 	incq	%rdi
 
 	shrq	$8,%rdx
@@ -96,6 +101,7 @@ __stpcpy:
 	incq	%rdi
 
 	shrq	$8,%rdx
+	VENKMAN_PAD(2)
 	movb	%dl,(%rdi)
 	testb	%dl,%dl		/* 7th byte == 0? */
 	je	.Ldone
@@ -106,11 +112,12 @@ __stpcpy:
 	incq	%rdi
 	testb	%dl,%dl		/* 8th byte == 0? */
 	jne	.Lword_aligned
+	VENKMAN_PAD(29)
 	decq	%rdi
 
 .Ldone:
 	movq	%rdi,%rax
-	ret
+	VENKMAN_RET
 END(stpcpy)
-	
+
 	.section .note.GNU-stack,"",%progbits

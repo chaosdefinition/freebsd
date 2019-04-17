@@ -36,7 +36,7 @@ ENTRY(fabs)
 	movsd	%xmm0, %xmm1
 	movsd	signbit(%rip), %xmm0
 	andnpd  %xmm1, %xmm0
-	ret
+	VENKMAN_RET
 END(fabs)
 
 	.data

@@ -41,11 +41,13 @@ __FBSDID("$FreeBSD$");
 	WEAK_REFERENCE(__sys_vfork, _vfork)
 	WEAK_REFERENCE(__sys_vfork, vfork)
 ENTRY(__sys_vfork)
+	VENKMAN_PAD(19)
 	popq	%rsi		/* fetch return address (%rsi preserved) */
 	mov	$SYS_vfork,%rax
 	KERNCALL
+	VENKMAN_PAD(20)
 	jb	1f
-	jmp	*%rsi
+	VENKMAN_JMPr(rsi)
 1:
 	pushq	%rsi
 	jmp	HIDENAME(cerror)

@@ -45,6 +45,7 @@ __FBSDID("$FreeBSD$");
  */
 
 ENTRY(rfork_thread)
+	VENKMAN_PAD(11)
 	pushq	%rbx
 	pushq	%r12
 	movq	%rdx, %rbx
@@ -55,6 +56,7 @@ ENTRY(rfork_thread)
 	 */
 	movq	$SYS_rfork, %rax
 	KERNCALL
+	VENKMAN_PAD(7)
 	jb 	2f
 
 	/*
@@ -64,7 +66,7 @@ ENTRY(rfork_thread)
 	jnz	1f
 	popq	%r12
 	popq	%rbx
-	ret
+	VENKMAN_RET
 
 	/*
 	 * If we are in the child (new thread), then
@@ -72,9 +74,11 @@ ENTRY(rfork_thread)
 	 * returns, then call __exit.
 	 */
 1:
+	VENKMAN_PAD(20)
 	movq	%rsi, %rsp
-	movq	%r12, %rdi 
-	call	*%rbx
+	movq	%r12, %rdi
+	VENKMAN_CALLr(rbx)
+	VENKMAN_PAD(18)
 	movl	%eax, %edi
 
 	/*

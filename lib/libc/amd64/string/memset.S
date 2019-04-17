@@ -34,6 +34,7 @@ __FBSDID("$FreeBSD$");
 #define ALIGN_TEXT      .p2align 4,0x90 /* 16-byte alignment, nop filled */
 
 .macro MEMSET erms
+	VENKMAN_PAD(4)
 	movq	%rdi,%rax
 	movq	%rdx,%rcx
 	movzbq	%sil,%r8
@@ -41,12 +42,14 @@ __FBSDID("$FreeBSD$");
 	imulq	%r8,%r10
 
 	cmpq	$32,%rcx
+	VENKMAN_PAD(13)
 	jbe	101632f
 
 	cmpq	$256,%rcx
 	ja	1256f
 
 103200:
+	VENKMAN_PAD(5)
 	movq	%r10,(%rdi)
 	movq	%r10,8(%rdi)
 	movq	%r10,16(%rdi)
@@ -59,57 +62,67 @@ __FBSDID("$FreeBSD$");
 	ja	201632f
 	movq	%r10,-16(%rdi,%rcx)
 	movq	%r10,-8(%rdi,%rcx)
-	ret
+	VENKMAN_RET
 	ALIGN_TEXT
 101632:
+	VENKMAN_PAD(23)
 	cmpb	$16,%cl
 	jl	100816f
 201632:
+	VENKMAN_PAD(8)
 	movq	%r10,(%rdi)
 	movq	%r10,8(%rdi)
 	movq	%r10,-16(%rdi,%rcx)
 	movq	%r10,-8(%rdi,%rcx)
-	ret
+	VENKMAN_RET
 	ALIGN_TEXT
 100816:
+	VENKMAN_PAD(8)
 	cmpb	$8,%cl
 	jl	100408f
 	movq	%r10,(%rdi)
 	movq	%r10,-8(%rdi,%rcx)
-	ret
+	VENKMAN_RET
 	ALIGN_TEXT
 100408:
+	VENKMAN_PAD(8)
 	cmpb	$4,%cl
 	jl	100204f
 	movl	%r10d,(%rdi)
 	movl	%r10d,-4(%rdi,%rcx)
-	ret
+	VENKMAN_RET
 	ALIGN_TEXT
 100204:
+	VENKMAN_PAD(6)
 	cmpb	$2,%cl
 	jl	100001f
 	movw	%r10w,(%rdi)
 	movw	%r10w,-2(%rdi,%rcx)
-	ret
+	VENKMAN_RET
 	ALIGN_TEXT
 100001:
+	VENKMAN_PAD(20)
 	cmpb	$0,%cl
 	je	100000f
 	movb	%r10b,(%rdi)
 100000:
-	ret
+	VENKMAN_PAD(25)
+	VENKMAN_RET
 	ALIGN_TEXT
 1256:
+	VENKMAN_PAD(14)
 	movq	%rdi,%r9
 	movq	%r10,%rax
 	testl	$15,%edi
 	jnz	3f
 1:
 .if \erms == 1
+	VENKMAN_PAD(19)
 	rep
 	stosb
 	movq	%r9,%rax
 .else
+	VENKMAN_PAD(3)
 	movq	%rcx,%rdx
 	shrq	$3,%rcx
 	rep
@@ -117,11 +130,12 @@ __FBSDID("$FreeBSD$");
 	movq	%r9,%rax
 	andl	$7,%edx
 	jnz	2f
-	ret
+	VENKMAN_RET
 2:
+	VENKMAN_PAD(20)
 	movq	%r10,-8(%rdi,%rdx)
 .endif
-	ret
+	VENKMAN_RET
 	ALIGN_TEXT
 3:
 	movq	%r10,(%rdi)

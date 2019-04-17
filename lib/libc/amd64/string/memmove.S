@@ -48,14 +48,17 @@ __FBSDID("$FreeBSD$");
  * It does not clobber rax, r10 nor r11.
  */
 .macro MEMMOVE erms overlap begin end
+	VENKMAN_PAD(26)
 	\begin
 .if \overlap == 1
+	VENKMAN_PAD(17)
 	movq	%rdi,%r8
 	subq	%rsi,%r8
 	cmpq	%rcx,%r8	/* overlapping && src < dst? */
 	jb	2f
 .endif
 
+	VENKMAN_PAD(9)
 	cmpq	$32,%rcx
 	jb	1016f
 
@@ -63,6 +66,7 @@ __FBSDID("$FreeBSD$");
 	ja	1256f
 
 1032:
+	VENKMAN_PAD(2)
 	movq	(%rsi),%rdx
 	movq	%rdx,(%rdi)
 	movq	8(%rsi),%rdx
@@ -71,6 +75,7 @@ __FBSDID("$FreeBSD$");
 	movq	%rdx,16(%rdi)
 	movq	24(%rsi),%rdx
 	movq	%rdx,24(%rdi)
+	VENKMAN_PAD(1)
 	leaq	32(%rsi),%rsi
 	leaq	32(%rdi),%rdi
 	subq	$32,%rcx
@@ -79,7 +84,8 @@ __FBSDID("$FreeBSD$");
 	cmpb	$0,%cl
 	jne	1016f
 	\end
-	ret
+	VENKMAN_PAD(25)
+	VENKMAN_RET
 	ALIGN_TEXT
 1016:
 	cmpb	$16,%cl
@@ -90,6 +96,7 @@ __FBSDID("$FreeBSD$");
 	movq	%rdx,8(%rdi)
 	subb	$16,%cl
 	jz	1000f
+	VENKMAN_PAD(24)
 	leaq	16(%rsi),%rsi
 	leaq	16(%rdi),%rdi
 1008:
@@ -102,6 +109,7 @@ __FBSDID("$FreeBSD$");
 	leaq	8(%rsi),%rsi
 	leaq	8(%rdi),%rdi
 1004:
+	VENKMAN_PAD(2)
 	cmpb	$4,%cl
 	jl	1002f
 	movl	(%rsi),%edx
@@ -120,20 +128,24 @@ __FBSDID("$FreeBSD$");
 	leaq	2(%rsi),%rsi
 	leaq	2(%rdi),%rdi
 1001:
+	VENKMAN_PAD(19)
 	cmpb	$1,%cl
 	jl	1000f
 	movb	(%rsi),%dl
 	movb	%dl,(%rdi)
 1000:
+	VENKMAN_PAD(25)
 	\end
-	ret
+	VENKMAN_RET
 
 	ALIGN_TEXT
 1256:
 .if \erms == 1
+	VENKMAN_PAD(23)
 	rep
 	movsb
 .else
+	VENKMAN_PAD(6)
 	shrq	$3,%rcx                         /* copy by 64-bit words */
 	rep
 	movsq
@@ -142,7 +154,7 @@ __FBSDID("$FreeBSD$");
 	jne	1004b
 .endif
 	\end
-	ret
+	VENKMAN_RET
 
 .if \overlap == 1
 	/*
@@ -150,6 +162,7 @@ __FBSDID("$FreeBSD$");
 	 */
         ALIGN_TEXT
 2:
+	VENKMAN_PAD(3)
 	addq	%rcx,%rdi
 	addq	%rcx,%rsi
 
@@ -168,6 +181,7 @@ __FBSDID("$FreeBSD$");
 	movq	%rdx,-24(%rdi)
 	movq	-32(%rsi),%rdx
 	movq	%rdx,-32(%rdi)
+	VENKMAN_PAD(1)
 	leaq	-32(%rsi),%rsi
 	leaq	-32(%rdi),%rdi
 	subq	$32,%rcx
@@ -176,9 +190,11 @@ __FBSDID("$FreeBSD$");
 	cmpb	$0,%cl
 	jne	2016f
 	\end
-	ret
+	VENKMAN_PAD(25)
+	VENKMAN_RET
 	ALIGN_TEXT
 2016:
+	VENKMAN_PAD(4)
 	cmpb	$16,%cl
 	jl	2008f
 	movq	-8(%rsi),%rdx
@@ -186,10 +202,12 @@ __FBSDID("$FreeBSD$");
 	movq	-16(%rsi),%rdx
 	movq	%rdx,-16(%rdi)
 	subb	$16,%cl
+	VENKMAN_PAD(18)
 	jz	2000f
 	leaq	-16(%rsi),%rsi
 	leaq	-16(%rdi),%rdi
 2008:
+	VENKMAN_PAD(2)
 	cmpb	$8,%cl
 	jl	2004f
 	movq	-8(%rsi),%rdx
@@ -197,6 +215,7 @@ __FBSDID("$FreeBSD$");
 	subb	$8,%cl
 	jz	2000f
 	leaq	-8(%rsi),%rsi
+	VENKMAN_PAD(28)
 	leaq	-8(%rdi),%rdi
 2004:
 	cmpb	$4,%cl
@@ -208,6 +227,7 @@ __FBSDID("$FreeBSD$");
 	leaq	-4(%rsi),%rsi
 	leaq	-4(%rdi),%rdi
 2002:
+	VENKMAN_PAD(2)
 	cmpb	$2,%cl
 	jl	2001f
 	movw	-2(%rsi),%dx
@@ -215,24 +235,30 @@ __FBSDID("$FreeBSD$");
 	subb	$2,%cl
 	jz	2000f
 	leaq	-2(%rsi),%rsi
+	VENKMAN_PAD(28)
 	leaq	-2(%rdi),%rdi
 2001:
+	VENKMAN_PAD(17)
 	cmpb	$1,%cl
 	jl	2000f
 	movb	-1(%rsi),%dl
 	movb	%dl,-1(%rdi)
 2000:
+	VENKMAN_PAD(25)
 	\end
-	ret
+	VENKMAN_RET
 	ALIGN_TEXT
 2256:
+	VENKMAN_PAD(25)
 	decq	%rdi
 	decq	%rsi
 	std
 .if \erms == 1
+	VENKMAN_PAD(30)
 	rep
 	movsb
 .else
+	VENKMAN_PAD(20)
 	andq	$7,%rcx                         /* any fractional bytes? */
 	je	3f
 	rep
@@ -247,7 +273,7 @@ __FBSDID("$FreeBSD$");
 .endif
 	cld
 	\end
-	ret
+	VENKMAN_RET
 .endif
 .endm
 
