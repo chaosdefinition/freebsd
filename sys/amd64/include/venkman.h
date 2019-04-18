@@ -17,17 +17,60 @@
 #define _START_ENTRY		.text; .p2align BUNDLE_ALIGNMENT,0x90
 #endif /* _START_ENTRY */
 
-/* Redefine ALIGN_TEXT for a larger function alignment */
+/* Redefine ALIGN_TEXT for bundle alignment */
 #ifdef ALIGN_TEXT
 #undef ALIGN_TEXT
 #define ALIGN_TEXT		.p2align BUNDLE_ALIGNMENT,0x90
 #endif /* ALIGN_TEXT */
 
-/* Redefine SUPERALIGN_TEXT for a larger function alignment */
+/* Redefine SUPERALIGN_TEXT for bundle alignment */
 #ifdef SUPERALIGN_TEXT
 #undef SUPERALIGN_TEXT
 #define SUPERALIGN_TEXT		.p2align BUNDLE_ALIGNMENT,0x90
 #endif /* SUPERALIGN_TEXT */
+
+/* Redefine profiling related macros for bundle alignment */
+#ifdef PROF
+#ifdef ENTRY
+#undef ENTRY
+#define ENTRY(x)		_ENTRY(x);				\
+				VENKMAN_PAD(23);			\
+				pushq %rbp; movq %rsp,%rbp;		\
+				call PIC_PLT(HIDENAME(mcount));		\
+				VENKMAN_PAD(31);			\
+				popq %rbp;				\
+				9:
+#endif /* ENTRY */
+#ifdef ALTENTRY
+#undef ALTENTRY
+#define ALTENTRY(x)		_ENTRY(x);				\
+				VENKMAN_PAD(23);			\
+				pushq %rbp; movq %rsp,%rbp;		\
+				call PIC_PLT(HIDENAME(mcount));		\
+				VENKMAN_PAD(26);			\
+				popq %rbp;				\
+				jmp 9f
+#endif /* ALTENTRY */
+#endif /* PROF */
+
+#ifdef GPROF
+#ifdef MCOUNT
+#undef MCOUNT
+#define MCOUNT			VENKMAN_PAD(27); call __mcount
+#endif /* MCOUNT */
+#ifdef FAKE_MCOUNT
+#undef FAKE_MCOUNT
+#define FAKE_MOUNT(caller)	pushq caller; .p2align 4,0x90;		\
+				VENKMAN_PAD(11); call __mount;		\
+				VENKMAN_PAD(31); popq %rcx
+#endif /* FAKE_MCOUNT */
+#ifdef GUPROF
+#ifdef MEXITCOUNT
+#undef MEXITCOUNT
+#define MEXITCOUNT		VENKMAN_PAD(27); call .mexitcount
+#endif /* MEXITCOUNT */
+#endif /* GUPROF */
+#endif /* GPROF */
 
 /* Macros for creating code padding */
 #define VENKMAN_PAD_1		nop
