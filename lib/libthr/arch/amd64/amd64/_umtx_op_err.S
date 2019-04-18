@@ -30,7 +30,9 @@
 #include <machine/asm.h>
 
 #define	RSYSCALL_ERR(x)	ENTRY(__CONCAT(x, _err));		\
-			mov __CONCAT($SYS_,x),%rax; KERNCALL; ret; 
+			VENKMAN_PAD(20);			\
+			mov __CONCAT($SYS_,x),%rax; KERNCALL;	\
+			VENKMAN_RET;
 
 #define KERNCALL	movq %rcx, %r10; syscall
 
