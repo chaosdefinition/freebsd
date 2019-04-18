@@ -129,6 +129,10 @@
 				addq	$imm, %rsp;			\
 				VENKMAN_JMPr(rcx)
 
+/* This is for cases where we cannot clobber %rcx (e.g., context switch code) */
+#define VENKMAN_RET_NOREG	andq	$-BUNDLE_SIZE, (%rsp);		\
+				retq
+
 #else /* !VENKMAN || !VENKMAN_CFI */
 
 #define VENKMAN_JMPr(reg)	jmpq	*%reg
@@ -138,6 +142,8 @@
 #define VENKMAN_RET		ret
 
 #define VENKMAN_RETI(imm)	ret	$imm
+
+#define VENKMAN_RET_NOREG	ret
 
 #endif /* !VENKMAN || !VENKMAN_CFI */
 
