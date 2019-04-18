@@ -92,4 +92,6 @@
 #endif
 #endif /* __arm__ */
 
+#include <machine/asm.h>
+
 #endif /* UNWIND_ASSEMBLY_H */

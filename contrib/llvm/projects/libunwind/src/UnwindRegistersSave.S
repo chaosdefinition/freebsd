@@ -61,6 +61,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 #  thread_state pointer is in rdi
 #
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+  VENKMAN_PAD(1)
   movq  %rax,   (%rdi)
   movq  %rbx,  8(%rdi)
   movq  %rcx, 16(%rdi)
@@ -69,6 +70,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   movq  %rsi, 40(%rdi)
   movq  %rbp, 48(%rdi)
   movq  %rsp, 56(%rdi)
+  VENKMAN_PAD(3)
   addq  $8,   56(%rdi)
   movq  %r8,  64(%rdi)
   movq  %r9,  72(%rdi)
@@ -85,7 +87,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   # skip fs
   # skip gs
   xorl  %eax, %eax    # return UNW_ESUCCESS
-  ret
+  VENKMAN_RET
 
 #elif defined(__mips__) && defined(_ABIO32) && _MIPS_SIM == _ABIO32
 

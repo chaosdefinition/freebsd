@@ -60,6 +60,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind16Registers_x86_646jumptoEv)
 #
 # On entry, thread_state pointer is in rdi
 
+  VENKMAN_PAD(2)
   movq  56(%rdi), %rax # rax holds new stack pointer
   subq  $16, %rax
   movq  %rax, 56(%rdi)
@@ -68,6 +69,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind16Registers_x86_646jumptoEv)
   movq  128(%rdi), %rbx # store new rip on new stack
   movq  %rbx, 8(%rax)
   # restore all registers
+  VENKMAN_PAD(1)
   movq    0(%rdi), %rax
   movq    8(%rdi), %rbx
   movq   16(%rdi), %rcx
@@ -78,6 +80,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind16Registers_x86_646jumptoEv)
   # restore rsp later
   movq   64(%rdi), %r8
   movq   72(%rdi), %r9
+  VENKMAN_PAD(3)
   movq   80(%rdi), %r10
   movq   88(%rdi), %r11
   movq   96(%rdi), %r12
@@ -90,7 +93,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind16Registers_x86_646jumptoEv)
   # skip gs
   movq  56(%rdi), %rsp  # cut back rsp to new location
   pop    %rdi      # rdi was saved here earlier
-  ret            # rip was saved here
+  VENKMAN_RET_NOREG     # rip was saved here
 
 
 #elif defined(__ppc__)
