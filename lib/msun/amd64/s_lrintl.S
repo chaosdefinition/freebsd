@@ -32,7 +32,7 @@ ENTRY(lrintl)
 	subq	$8,%rsp
 	fistpll	(%rsp)
 	popq	%rax
-	ret
+	VENKMAN_RET
 END(lrintl)
 
 	.section .note.GNU-stack,"",%progbits

@@ -33,7 +33,7 @@ __FBSDID("$FreeBSD$")
 
 ENTRY(fn)
 	cvtss2si %xmm0, %rax
-	ret
+	VENKMAN_RET
 END(fn)
 
 	.section .note.GNU-stack,"",%progbits

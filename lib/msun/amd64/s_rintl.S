@@ -40,7 +40,7 @@
 ENTRY(rintl)
 	fldt	8(%rsp)
 	frndint
-	ret
+	VENKMAN_RET
 END(rintl)
 
 	.section .note.GNU-stack,"",%progbits

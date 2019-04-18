@@ -40,7 +40,7 @@ ENTRY(logbl)
 	fldt	8(%rsp)
 	fxtract
 	fstp	%st
-	ret
+	VENKMAN_RET
 END(logbl)
 
 	.section .note.GNU-stack,"",%progbits

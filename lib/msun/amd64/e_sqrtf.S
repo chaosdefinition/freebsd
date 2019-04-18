@@ -29,7 +29,7 @@ __FBSDID("$FreeBSD$")
 
 ENTRY(sqrtf)
 	sqrtss	%xmm0, %xmm0
-	ret
+	VENKMAN_RET
 END(sqrtf)
 
 	.section .note.GNU-stack,"",%progbits

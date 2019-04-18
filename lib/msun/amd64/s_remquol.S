@@ -32,9 +32,12 @@
 __FBSDID("$FreeBSD$");
 
 ENTRY(remquol)
+	VENKMAN_PAD(24)
 	fldt    24(%rsp)
 	fldt    8(%rsp)
-1:	fprem1
+1:
+	VENKMAN_PAD(1)
+	fprem1
 	fstsw	%ax
 	btw	$10,%ax
 	jc	1b
@@ -59,7 +62,7 @@ ENTRY(remquol)
 	addl	%ecx,%eax
 /* Store the quotient and return. */
 	movl	%eax,(%rdi)
-	ret
+	VENKMAN_RET
 END(remquol)
 
 	.section .note.GNU-stack,"",%progbits

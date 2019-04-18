@@ -32,11 +32,14 @@
 __FBSDID("$FreeBSD$");
 
 ENTRY(remquof)
+	VENKMAN_PAD(12)
 	movss	%xmm0,-4(%rsp)
 	movss	%xmm1,-8(%rsp)
 	flds	-8(%rsp)
 	flds	-4(%rsp)
-1:	fprem1
+1:
+	VENKMAN_PAD(1)
+	fprem1
 	fstsw	%ax
 	btw	$10,%ax
 	jc	1b
@@ -46,6 +49,7 @@ ENTRY(remquof)
 	movl	%eax,%ecx
 	andl	$0x108,%eax
 	rorl	$7,%eax
+	VENKMAN_PAD(1)
 	orl	%eax,%ecx
 	roll	$4,%eax
 	orl	%ecx,%eax
@@ -62,7 +66,7 @@ ENTRY(remquof)
 	movl	%eax,(%rdi)
 	fstps	-4(%rsp)
 	movss	-4(%rsp),%xmm0
-	ret
+	VENKMAN_RET
 END(remquof)
 
 	.section .note.GNU-stack,"",%progbits

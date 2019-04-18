@@ -29,7 +29,7 @@ __FBSDID("$FreeBSD$")
 
 ENTRY(sqrt)
 	sqrtsd	%xmm0, %xmm0
-	ret
+	VENKMAN_RET
 END(sqrt)
 
 

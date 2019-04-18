@@ -13,7 +13,7 @@ ENTRY(scalbnl)
 	fldt	8(%rsp)
 	fscale
 	fstp	%st(1)
-	ret
+	VENKMAN_RET
 END(scalbnl)
 
 .globl	CNAME(ldexpl)

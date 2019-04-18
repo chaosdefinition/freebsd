@@ -36,7 +36,7 @@ ENTRY(scalbnf)
 	fstp	%st(1)
 	fstps	-8(%rsp)
 	movss	-8(%rsp),%xmm0
-	ret
+	VENKMAN_RET
 END(scalbnf)
 
 .globl CNAME(ldexpf)

@@ -39,18 +39,21 @@
 __FBSDID("$FreeBSD$")
 
 ENTRY(remainder)
+	VENKMAN_PAD(12)
 	movsd	%xmm0,-8(%rsp)
 	movsd	%xmm1,-16(%rsp)
 	fldl	-16(%rsp)
 	fldl	-8(%rsp)
-1:	fprem1
+1:
+	VENKMAN_PAD(17)
+	fprem1
 	fstsw	%ax
 	testw	$0x400,%ax
 	jne	1b
 	fstpl	-8(%rsp)
 	movsd	-8(%rsp),%xmm0
 	fstp	%st
-	ret
+	VENKMAN_RET
 END(remainder)
 
 	.section .note.GNU-stack,"",%progbits

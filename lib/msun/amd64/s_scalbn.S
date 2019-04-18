@@ -36,7 +36,7 @@ ENTRY(scalbn)
 	fstp	%st(1)
 	fstpl	-8(%rsp)
 	movsd	-8(%rsp),%xmm0
-	ret
+	VENKMAN_RET
 END(scalbn)
 
 	.section .note.GNU-stack,"",%progbits
