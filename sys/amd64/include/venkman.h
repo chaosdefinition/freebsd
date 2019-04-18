@@ -9,6 +9,8 @@
 #define BUNDLE_ALIGNMENT	5
 #define BUNDLE_SIZE		32
 
+#define VENKMAN_ALIGNMENT	BUNDLE_ALIGNMENT
+
 /* Redefine _START_ENTRY for a larger function alignment */
 #ifdef _START_ENTRY
 #undef _START_ENTRY
@@ -61,6 +63,7 @@
 #define VENKMAN_PAD_31		VENKMAN_PAD_1;      VENKMAN_PAD_30
 #define VENKMAN_PAD(n)		VENKMAN_PAD_##n
 #else /* !VENKMAN */
+#define VENKMAN_ALIGNMENT	4
 #define VENKMAN_PAD(n)
 #endif /* !VENKMAN */
 
