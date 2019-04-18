@@ -26,10 +26,11 @@
 
 #include <machine/asm.h>
 __FBSDID("$FreeBSD$")
-	
+
 ENTRY(sqrtl)
 	fldt	8(%rsp)
 	fsqrt
 	ret
+END(sqrtl)
 
 	.section .note.GNU-stack,"",%progbits

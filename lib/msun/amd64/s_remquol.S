@@ -29,8 +29,8 @@
  */
 
 #include <machine/asm.h>
-__FBSDID("$FreeBSD$"); 
-	
+__FBSDID("$FreeBSD$");
+
 ENTRY(remquol)
 	fldt    24(%rsp)
 	fldt    8(%rsp)
@@ -60,5 +60,6 @@ ENTRY(remquol)
 /* Store the quotient and return. */
 	movl	%eax,(%rdi)
 	ret
+END(remquol)
 
 	.section .note.GNU-stack,"",%progbits

@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("from: $NetBSD: e_remainderf.S,v 1.2 1995/05/08 23:49:47 jtc Exp $")
+/* RCSID("from: $NetBSD: e_remainderf.S,v 1.2 1995/05/08 23:49:47 jtc Exp $") */
 __FBSDID("$FreeBSD$")
 
 ENTRY(remainderf)
@@ -21,5 +21,6 @@ ENTRY(remainderf)
 	movss	-4(%rsp),%xmm0
 	fstp	%st
 	ret
+END(remainderf)
 
 	.section .note.GNU-stack,"",%progbits

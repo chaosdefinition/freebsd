@@ -25,13 +25,14 @@
  */
 
 #include <machine/asm.h>
-__FBSDID("$FreeBSD$"); 
-	
+__FBSDID("$FreeBSD$");
+
 ENTRY(llrintl)
 	fldt	8(%rsp)
 	subq	$8,%rsp
 	fistpll	(%rsp)
 	popq	%rax
 	ret
+END(llrintl)
 
 	.section .note.GNU-stack,"",%progbits
