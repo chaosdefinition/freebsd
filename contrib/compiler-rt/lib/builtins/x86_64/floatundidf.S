@@ -36,6 +36,7 @@ twop84:
 .text
 .balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundidf)
+	VENKMAN_PAD(4)
 	movd	%edi,							%xmm0 // low 32 bits of a
 	shrq	$32,							%rdi  // high 32 bits of a
 	orq		REL_ADDR(twop84),				%rdi  // 0x1p84 + a_hi (no rounding occurs)
@@ -43,7 +44,7 @@ DEFINE_COMPILERRT_FUNCTION(__floatundidf)
 	movd	%rdi,							%xmm1
 	subsd	REL_ADDR(twop84_plus_twop52),	%xmm1 // a_hi - 0x1p52 (no rounding occurs)
 	addsd	%xmm1,							%xmm0 // a_hi + a_lo   (round happens here)
-	ret
+	VENKMAN_RET
 END_COMPILERRT_FUNCTION(__floatundidf)
 
 #endif // __x86_64__

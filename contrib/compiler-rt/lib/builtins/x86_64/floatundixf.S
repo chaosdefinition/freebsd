@@ -19,13 +19,15 @@ twop64:
 
 	.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundixf)
+	VENKMAN_PAD(7)
 	movq	%rdi,	 -8(%rsp)
 	fildq	-8(%rsp)
 	test	%rdi,		%rdi
 	js		1f
-	ret
-1:	faddl	REL_ADDR(twop64)
-	ret
+	VENKMAN_RET
+1:
+	faddl	REL_ADDR(twop64)
+	VENKMAN_RET
 END_COMPILERRT_FUNCTION(__floatundixf)
 
 #endif // __x86_64__

@@ -18,18 +18,19 @@ two:
 .text
 .balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundisf)
+	VENKMAN_PAD(4)
 	movq		$1,			%rsi
 	testq		%rdi,		%rdi
 	js			1f
 	cvtsi2ssq	%rdi,		%xmm0
-	ret
-	
-1:	andq		%rdi,		%rsi
+	VENKMAN_RET
+1:
+	andq		%rdi,		%rsi
 	shrq		%rdi
 	orq			%rsi,		%rdi
 	cvtsi2ssq	%rdi,		%xmm0
 	mulss	REL_ADDR(two),	%xmm0
-	ret
+	VENKMAN_RET
 END_COMPILERRT_FUNCTION(__floatundisf)
 
 #endif // __x86_64__

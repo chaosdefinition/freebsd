@@ -152,6 +152,7 @@
   .globl SYMBOL_NAME(name) SEPARATOR                                           \
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR                                  \
   DECLARE_SYMBOL_VISIBILITY(name)                                              \
+  .p2align VENKMAN_ALIGNMENT SEPARATOR                                         \
   DECLARE_FUNC_ENCODING                                                        \
   SYMBOL_NAME(name):
 
@@ -162,6 +163,7 @@
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR                                  \
   DECLARE_SYMBOL_VISIBILITY(name) SEPARATOR                                    \
   .thumb_func SEPARATOR                                                        \
+  .p2align VENKMAN_ALIGNMENT SEPARATOR                                         \
   SYMBOL_NAME(name):
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION(name)                               \
@@ -170,6 +172,7 @@
   .globl SYMBOL_NAME(name) SEPARATOR                                           \
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR                                  \
   HIDDEN(SYMBOL_NAME(name)) SEPARATOR                                          \
+  .p2align VENKMAN_ALIGNMENT SEPARATOR                                         \
   DECLARE_FUNC_ENCODING                                                        \
   SYMBOL_NAME(name):
 
@@ -178,6 +181,7 @@
   .globl name SEPARATOR                                                        \
   SYMBOL_IS_FUNC(name) SEPARATOR                                               \
   HIDDEN(name) SEPARATOR                                                       \
+  .p2align VENKMAN_ALIGNMENT SEPARATOR                                         \
   DECLARE_FUNC_ENCODING                                                        \
   name:
 
@@ -200,5 +204,7 @@
 #else
 #define END_COMPILERRT_FUNCTION(name)
 #endif
+
+#include <machine/asm.h>
 
 #endif /* COMPILERRT_ASSEMBLY_H */
