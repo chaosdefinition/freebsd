@@ -114,7 +114,8 @@
  * Venkman CFI stuffs ********************************************************
  *****************************************************************************/
 
-#if defined(VENKMAN) && defined(VENKMAN_CFI)
+#ifdef VENKMAN
+#ifdef VENKMAN_CFI
 
 #define VENKMAN_JMPr(reg)	andq	$-BUNDLE_SIZE, %reg;		\
 				jmpq	*%reg
@@ -133,7 +134,21 @@
 #define VENKMAN_RET_NOREG	andq	$-BUNDLE_SIZE, (%rsp);		\
 				retq
 
-#else /* !VENKMAN || !VENKMAN_CFI */
+#else /* !VENKMAN_CFI */
+
+#define VENKMAN_JMPr(reg)	VENKMAN_PAD(4); jmpq	*%reg
+
+#define VENKMAN_CALLr(reg)	VENKMAN_PAD(4); callq	*%reg
+
+#define VENKMAN_RET		VENKMAN_PAD(6); ret
+
+#define VENKMAN_RETI(imm)	VENKMAN_PAD(4); ret	$imm
+
+#define VENKMAN_RET_NOREG	VENKMAN_RET
+
+#endif /* !VENKMAN_CFI */
+
+#else /* !VENKMAN */
 
 #define VENKMAN_JMPr(reg)	jmpq	*%reg
 
@@ -143,8 +158,8 @@
 
 #define VENKMAN_RETI(imm)	ret	$imm
 
-#define VENKMAN_RET_NOREG	ret
+#define VENKMAN_RET_NOREG	VENKMAN_RET
 
-#endif /* !VENKMAN || !VENKMAN_CFI */
+#endif /* !VENKMAN */
 
 #endif /* _MACHINE_VENKMAN_H_ */
