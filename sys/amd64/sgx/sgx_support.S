@@ -51,11 +51,12 @@ ENTRY(sgx_encls)
 	movq	%rsi,%rbx
 	xchgq	%rdx,%rcx
 	movq	$sgx_onfault,PCB_ONFAULT(%r8)
+	VENKMAN_PAD(2)
 	.byte 0x0f, 0x01, 0xcf
 	movq	$0,PCB_ONFAULT(%r8)
 	popq	%rbx
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(sgx_encls)
 
 /*
@@ -67,4 +68,4 @@ sgx_onfault:
 	movl	$SGX_EFAULT,%eax
 	popq	%rbx
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET

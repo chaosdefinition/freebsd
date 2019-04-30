@@ -33,10 +33,11 @@
 
 #include "assym.inc"
 
+	ALIGN_FOR_VENKMAN
 futex_fault:
 	movq	$0,PCB_ONFAULT(%r8)
 	movl	$-EFAULT,%eax
-	ret
+	VENKMAN_RET
 
 ENTRY(futex_xchgl_nosmap)
 	movq	PCPU(CURPCB),%r8
@@ -48,7 +49,7 @@ ENTRY(futex_xchgl_nosmap)
 	movl	%edi,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_xchgl_nosmap)
 
 ENTRY(futex_xchgl_smap)
@@ -63,7 +64,7 @@ ENTRY(futex_xchgl_smap)
 	movl	%edi,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_xchgl_smap)
 
 ENTRY(futex_addl_nosmap)
@@ -79,7 +80,7 @@ ENTRY(futex_addl_nosmap)
 	movl	%edi,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_addl_nosmap)
 
 ENTRY(futex_addl_smap)
@@ -97,7 +98,7 @@ ENTRY(futex_addl_smap)
 	movl	%edi,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_addl_smap)
 
 ENTRY(futex_orl_nosmap)
@@ -107,6 +108,8 @@ ENTRY(futex_orl_nosmap)
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
+
+	ALIGN_FOR_VENKMAN
 1:	movl	%eax,%ecx
 	orl	%edi,%ecx
 #ifdef SMP
@@ -117,7 +120,7 @@ ENTRY(futex_orl_nosmap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_orl_nosmap)
 
 ENTRY(futex_orl_smap)
@@ -127,6 +130,8 @@ ENTRY(futex_orl_smap)
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
+
+	ALIGN_FOR_VENKMAN
 1:	movl	%eax,%ecx
 	orl	%edi,%ecx
 	stac
@@ -139,7 +144,7 @@ ENTRY(futex_orl_smap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_orl_smap)
 
 ENTRY(futex_andl_nosmap)
@@ -149,6 +154,8 @@ ENTRY(futex_andl_nosmap)
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
+
+	ALIGN_FOR_VENKMAN
 1:	movl	%eax,%ecx
 	andl	%edi,%ecx
 #ifdef SMP
@@ -159,7 +166,7 @@ ENTRY(futex_andl_nosmap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_andl_nosmap)
 
 ENTRY(futex_andl_smap)
@@ -169,6 +176,8 @@ ENTRY(futex_andl_smap)
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
+
+	ALIGN_FOR_VENKMAN
 1:	movl	%eax,%ecx
 	andl	%edi,%ecx
 	stac
@@ -181,7 +190,7 @@ ENTRY(futex_andl_smap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_andl_smap)
 
 ENTRY(futex_xorl_nosmap)
@@ -191,6 +200,8 @@ ENTRY(futex_xorl_nosmap)
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
+
+	ALIGN_FOR_VENKMAN
 1:	movl	%eax,%ecx
 	xorl	%edi,%ecx
 #ifdef SMP
@@ -201,7 +212,7 @@ ENTRY(futex_xorl_nosmap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_xorl_nosmap)
 
 ENTRY(futex_xorl_smap)
@@ -211,6 +222,8 @@ ENTRY(futex_xorl_smap)
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
+
+	ALIGN_FOR_VENKMAN
 1:	movl	%eax,%ecx
 	xorl	%edi,%ecx
 	stac
@@ -223,5 +236,5 @@ ENTRY(futex_xorl_smap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
-	ret
+	VENKMAN_RET
 END(futex_xorl_smap)

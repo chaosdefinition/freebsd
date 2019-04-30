@@ -39,11 +39,15 @@
  *
  */
 NON_GPROF_ENTRY(sigcode)
-	call	*SIGF_HANDLER(%rsp)	/* call signal handler */
+	VENKMAN_PAD(24)
+	VENKMAN_CALLm(SIGF_HANDLER(%rsp))	/* call signal handler */
 	lea	SIGF_UC(%rsp),%rdi	/* get ucontext_t */
 	pushq	$0			/* junk to fake return addr. */
 	movq	$SYS_sigreturn,%rax
+	VENKMAN_PAD(16)
 	syscall				/* enter kernel with args */
+
+	ALIGN_FOR_VENKMAN
 0:	hlt				/* trap priviliged instruction */
 	jmp	0b
 

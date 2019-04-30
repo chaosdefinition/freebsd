@@ -64,13 +64,14 @@ as_lapic_eoi:
 	jne	1f
 	movq	lapic_map,%rax
 	movl	$0,LA_EOI(%rax)
-	ret
+	VENKMAN_RET
+	ALIGN_FOR_VENKMAN
 1:
 	movl	$MSR_APIC_EOI,%ecx
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
-	ret
+	VENKMAN_RET
 
 /*
  * I/O Interrupt Entry Point.  Rather than having one entry point for
@@ -87,16 +88,23 @@ as_lapic_eoi:
 	movl	$(MSR_APIC_ISR0 + \index),%ecx
 	rdmsr
 	jmp	2f
+
+	ALIGN_FOR_VENKMAN
 1:
 	movq	lapic_map, %rdx		/* pointer to local APIC */
 	movl	LA_ISR + 16 * (\index)(%rdx), %eax	/* load ISR */
+
+	ALIGN_FOR_VENKMAN
 2:
 	bsrl	%eax, %eax	/* index of highest set bit in ISR */
 	jz	3f
 	addl	$(32 * \index),%eax
 	movq	%rsp, %rsi
 	movl	%eax, %edi	/* pass the IRQ */
+	VENKMAN_PAD(10)
 	call	lapic_handle_intr
+
+	ALIGN_FOR_VENKMAN
 3:
 	MEXITCOUNT
 	jmp	doreti
@@ -129,6 +137,7 @@ IDTVEC(spuriousint)
 	INTR_HANDLER	timerint
 	FAKE_MCOUNT(TF_RIP(%rsp))
 	movq	%rsp, %rdi
+	VENKMAN_PAD(24)
 	call	lapic_handle_timer
 	MEXITCOUNT
 	jmp	doreti
@@ -138,6 +147,7 @@ IDTVEC(spuriousint)
  */
 	INTR_HANDLER cmcint
 	FAKE_MCOUNT(TF_RIP(%rsp))
+	VENKMAN_PAD(27)
 	call	lapic_handle_cmc
 	MEXITCOUNT
 	jmp	doreti
@@ -147,6 +157,7 @@ IDTVEC(spuriousint)
  */
 	INTR_HANDLER errorint
 	FAKE_MCOUNT(TF_RIP(%rsp))
+	VENKMAN_PAD(27)
 	call	lapic_handle_error
 	MEXITCOUNT
 	jmp	doreti
@@ -159,6 +170,7 @@ IDTVEC(spuriousint)
 	INTR_HANDLER xen_intr_upcall
 	FAKE_MCOUNT(TF_RIP(%rsp))
 	movq	%rsp, %rdi
+	VENKMAN_PAD(24)
 	call	xen_intr_handle_upcall
 	MEXITCOUNT
 	jmp	doreti
@@ -172,23 +184,28 @@ IDTVEC(spuriousint)
 
 	SUPERALIGN_TEXT
 invltlb_ret:
+	VENKMAN_PAD(27)
 	call	as_lapic_eoi
 	jmp	ld_regs
 
 	SUPERALIGN_TEXT
 	INTR_HANDLER invltlb
+	VENKMAN_PAD(27)
 	call	invltlb_handler
 	jmp	invltlb_ret
 
 	INTR_HANDLER invltlb_pcid
+	VENKMAN_PAD(27)
 	call	invltlb_pcid_handler
 	jmp	invltlb_ret
 
 	INTR_HANDLER invltlb_invpcid_nopti
+	VENKMAN_PAD(27)
 	call	invltlb_invpcid_handler
 	jmp	invltlb_ret
 
 	INTR_HANDLER invltlb_invpcid_pti
+	VENKMAN_PAD(27)
 	call	invltlb_invpcid_pti_handler
 	jmp	invltlb_ret
 
@@ -196,14 +213,17 @@ invltlb_ret:
  * Single page TLB shootdown
  */
 	INTR_HANDLER invlpg
+	VENKMAN_PAD(27)
 	call	invlpg_handler
 	jmp	invltlb_ret
 
 	INTR_HANDLER invlpg_invpcid
+	VENKMAN_PAD(27)
 	call	invlpg_invpcid_handler
 	jmp	invltlb_ret
 
 	INTR_HANDLER invlpg_pcid
+	VENKMAN_PAD(27)
 	call	invlpg_pcid_handler
 	jmp	invltlb_ret
 
@@ -211,14 +231,17 @@ invltlb_ret:
  * Page range TLB shootdown.
  */
 	INTR_HANDLER invlrng
+	VENKMAN_PAD(27)
 	call	invlrng_handler
 	jmp	invltlb_ret
 
 	INTR_HANDLER invlrng_invpcid
+	VENKMAN_PAD(27)
 	call	invlrng_invpcid_handler
 	jmp	invltlb_ret
 
 	INTR_HANDLER invlrng_pcid
+	VENKMAN_PAD(27)
 	call	invlrng_pcid_handler
 	jmp	invltlb_ret
 
@@ -226,6 +249,7 @@ invltlb_ret:
  * Invalidate cache.
  */
 	INTR_HANDLER invlcache
+	VENKMAN_PAD(27)
 	call	invlcache_handler
 	jmp	invltlb_ret
 
@@ -233,8 +257,10 @@ invltlb_ret:
  * Handler for IPIs sent via the per-cpu IPI bitmap.
  */
 	INTR_HANDLER ipi_intr_bitmap_handler
+	VENKMAN_PAD(27)
 	call	as_lapic_eoi
 	FAKE_MCOUNT(TF_RIP(%rsp))
+	VENKMAN_PAD(27)
 	call	ipi_bitmap_handler
 	MEXITCOUNT
 	jmp	doreti
@@ -243,7 +269,9 @@ invltlb_ret:
  * Executed by a CPU when it receives an IPI_STOP from another CPU.
  */
 	INTR_HANDLER cpustop
+	VENKMAN_PAD(27)
 	call	as_lapic_eoi
+	VENKMAN_PAD(27)
 	call	cpustop_handler
 	jmp	doreti
 
@@ -251,7 +279,9 @@ invltlb_ret:
  * Executed by a CPU when it receives an IPI_SUSPEND from another CPU.
  */
 	INTR_HANDLER cpususpend
+	VENKMAN_PAD(27)
 	call	cpususpend_handler
+	VENKMAN_PAD(27)
 	call	as_lapic_eoi
 	jmp	doreti
 
@@ -265,8 +295,11 @@ invltlb_ret:
 	movl	PCPU(CPUID), %eax
 	movq	ipi_rendezvous_counts(,%rax,8), %rax
 	incq	(%rax)
+	VENKMAN_PAD(0)
 #endif
+	VENKMAN_PAD(27)
 	call	smp_rendezvous_action
+	VENKMAN_PAD(27)
 	call	as_lapic_eoi
 	jmp	doreti
 
@@ -294,6 +327,7 @@ IDTVEC(justreturn)
 	pushq	%rax
 	pushq	%rcx
 	pushq	%rdx
+	VENKMAN_PAD(24)
 	call	as_lapic_eoi
 	popq	%rdx
 	popq	%rcx
@@ -301,6 +335,7 @@ IDTVEC(justreturn)
 	jmp	doreti_iret
 
 	INTR_HANDLER	justreturn1
+	VENKMAN_PAD(27)
 	call	as_lapic_eoi
 	jmp	doreti
 

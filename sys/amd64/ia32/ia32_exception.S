@@ -46,6 +46,8 @@ IDTVEC(int0x80_syscall_pti)
 	SUPERALIGN_TEXT
 IDTVEC(int0x80_syscall)
 	swapgs
+
+	ALIGN_FOR_VENKMAN
 int0x80_syscall_common:
 	pushq	$2			/* sizeof "int 0x80" */
 	subq	$TF_ERR,%rsp		/* skip over tf_trapno */
@@ -56,6 +58,7 @@ int0x80_syscall_common:
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rdx,TF_RDX(%rsp)
 	movq	%rcx,TF_RCX(%rsp)
+	VENKMAN_PAD(25)
 	call	handle_ibrs_entry
 	sti
 	movq	%rsi,TF_RSI(%rsp)
@@ -75,6 +78,7 @@ int0x80_syscall_common:
 	popfq
 	FAKE_MCOUNT(TF_RIP(%rsp))
 	movq	%rsp, %rdi
+	VENKMAN_PAD(11)
 	call	ia32_syscall
 	MEXITCOUNT
 	jmp	doreti

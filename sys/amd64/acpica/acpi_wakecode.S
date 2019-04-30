@@ -88,12 +88,19 @@ wakeup_start:
 	outb	%al, $TIMER_CNTR2
 	shrw	$8, %ax
 	outb	%al, $TIMER_CNTR2
-1:
 
+	ALIGN_FOR_VENKMAN
+1:
 	/* Re-initialize video BIOS if the reset_video tunable is set. */
 	testb	$~0, reset_video - wakeup_start
 	jz	1f
 	movb	$0, reset_video - wakeup_start
+#ifdef VENKMAN
+	nop
+	nop
+	nop
+	nop
+#endif
 	lcall	$0xc000, $3
 
 	/* When we reach here, int 0x10 should be ready.  Hide cursor. */
@@ -103,8 +110,9 @@ wakeup_start:
 
 	/* Re-start in case the previous BIOS call clobbers them. */
 	jmp	wakeup_start
-1:
 
+	ALIGN_FOR_VENKMAN
+1:
 	/*
 	 * Find relocation base and patch the gdt descript and ljmp targets
 	 */
@@ -228,7 +236,7 @@ wakeup_64:
 	lgdt	wakeup_gdt - wakeup_start(%rbx)
 
 	/* Jump to return address. */
-	jmp	*%rax
+	VENKMAN_JMPr(rax)
 
 	.data
 

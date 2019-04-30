@@ -5,6 +5,33 @@
 
 #include <amd64/linux32/linux32_syscall.h>	/* system call numbers */
 
+/* The VENKMAN_* macros use 64-bit registers which are unavailable in 32-bit
+ * mode
+ */
+#ifdef VENKMAN_PAD
+#undef VENKMAN_PAD
+#endif
+#ifdef VENKMAN_RET_NOREG
+#undef VENKMAN_RET_NOREG
+#endif
+#ifdef VENKMAN_JMPm
+#undef VENKMAN_JMPm
+#endif
+#ifdef VENKMAN
+#define VENKMAN_PAD(bytes) .skip bytes, 0x90
+#ifdef VENKMAN_CFI
+#define VENKMAN_JMPm(addr) andl $-BUNDLE_SIZE, addr; jmpl *addr
+#define VENKMAN_RET_NOREG andl $-BUNDLE_SIZE, (%esp); ret
+#else
+#define VENKMAN_RET_NOREG ret
+#define VENKMAN_JMPm(addr) jmpl *addr
+#endif
+#else
+#define VENKMAN_PAD(bytes)
+#define VENKMAN_RET_NOREG ret
+#define VENKMAN_JMPm(addr) jmpl *addr
+#endif
+
 .data
 
 	.globl linux_platform
@@ -20,16 +47,24 @@ linux_platform:
  */
 NON_GPROF_ENTRY(linux32_sigcode)
 	movl	%esp, %ebx			/* preserve sigframe */
+	VENKMAN_PAD(25)
 	call .getip0
+
+	ALIGN_FOR_VENKMAN
 .getip0:
 	popl	%eax
 	add	$.startsigcode-.getip0, %eax	/* ret address */
 	push	%eax
-	jmp	*LINUX_SIGF_HANDLER(%ebx)
+	VENKMAN_JMPm(LINUX_SIGF_HANDLER(%ebx))
+
+	ALIGN_FOR_VENKMAN
 .startsigcode:
 	popl	%eax
 	movl	$LINUX32_SYS_linux_sigreturn,%eax	/* linux_sigreturn() */
+	VENKMAN_PAD(24)
 	int	$0x80				/* enter kernel with args */
+
+	ALIGN_FOR_VENKMAN
 .endsigcode:
 0:	jmp	0b
 
@@ -37,22 +72,31 @@ NON_GPROF_ENTRY(linux32_rt_sigcode)
 	leal	LINUX_RT_SIGF_UC(%esp),%ebx	/* linux ucp */
 	leal	LINUX_RT_SIGF_SC(%ebx),%ecx	/* linux sigcontext */
 	movl	%esp, %edi
+	VENKMAN_PAD(15)
 	call	.getip1
+
+	ALIGN_FOR_VENKMAN
 .getip1:
 	popl	%eax
-	add	$.startrtsigcode-.getip1, %eax	/* ret address */
+	add	$.startrtsigcode-.getip1, %eax	/* VENKMAN_RET_NOREG address */
 	push	%eax
-	jmp	*LINUX_RT_SIGF_HANDLER(%edi)
+	VENKMAN_JMPm(LINUX_RT_SIGF_HANDLER(%edi))
+
+	ALIGN_FOR_VENKMAN
 .startrtsigcode:
 	movl	$LINUX32_SYS_linux_rt_sigreturn,%eax   /* linux_rt_sigreturn() */
+	VENKMAN_PAD(25)
 	int	$0x80				/* enter kernel with args */
+
+	ALIGN_FOR_VENKMAN
 .endrtsigcode:
 0:	jmp	0b
 
 NON_GPROF_ENTRY(linux32_vsyscall)
 .startvsyscall:
+	VENKMAN_PAD(30)
 	int $0x80
-	ret
+	VENKMAN_RET_NOREG
 .endvsyscall:
 
 #if 0

@@ -71,6 +71,7 @@
 ENTRY(cpu_throw)
 	movq	%rsi,%r12
 	movq	%rsi,%rdi
+	VENKMAN_PAD(21)
 	call	pmap_activate_sw
 	jmp	sw1
 END(cpu_throw)
@@ -110,6 +111,8 @@ ENTRY(cpu_switch)
 	jne	1f
 	rdfsbase %rax
 	movq	%rax,PCB_FSBASE(%r8)
+
+	ALIGN_FOR_VENKMAN
 1:	movl	%gs,%eax
 	cmpl	$KUG32SEL,%eax
 	jne	2f
@@ -121,9 +124,12 @@ ENTRY(cpu_switch)
 	movq	%rax,PCB_GSBASE(%r8)
 	movq	%r12,%rdx
 
+	ALIGN_FOR_VENKMAN
 2:
 	testl	$PCB_DBREGS,PCB_FLAGS(%r8)
 	jnz	store_dr			/* static predict not taken */
+
+	ALIGN_FOR_VENKMAN
 done_store_dr:
 
 	/* have we used fp, and need a save? */
@@ -135,6 +141,8 @@ done_store_dr:
 	jne	1f
 	fxsave	(%r8)
 	jmp	2f
+
+	ALIGN_FOR_VENKMAN
 1:	movq	%rdx,%rcx
 	movl	xsave_mask,%eax
 	movl	xsave_mask+4,%edx
@@ -143,19 +151,26 @@ ctx_switch_xsave:
 	/* This is patched to xsaveopt if supported, see fpuinit_bsp1() */
 	xsave	(%r8)
 	movq	%rcx,%rdx
+
+	ALIGN_FOR_VENKMAN
 2:
 	/* Save is done.  Now fire up new thread. Leave old vmspace. */
 	movq	%rsi,%r12
 	movq	%rdi,%r13
 	movq	%rdx,%r15
 	movq	%rsi,%rdi
+	VENKMAN_PAD(15)
 	callq	pmap_activate_sw
 	SETLK	%r15,TD_LOCK(%r13)		/* Release the old thread */
+
+	ALIGN_FOR_VENKMAN
 sw1:
 	movq	TD_PCB(%r12),%r8
 #if defined(SCHED_ULE) && defined(SMP)
 	/* Wait for the new thread to become unblocked */
 	movq	$blocked_lock, %rdx
+
+	ALIGN_FOR_VENKMAN
 1:
 	movq	TD_LOCK(%r12),%rcx
 	cmpq	%rcx, %rdx
@@ -178,6 +193,8 @@ sw1:
 	cmpq	$0, P_MD+MD_LDT(%rcx)
 	jne	do_ldt
 	xorl	%eax,%eax
+
+	ALIGN_FOR_VENKMAN
 ld_ldt:	lldt	%ax
 
 	/* Restore fs base in GDT */
@@ -198,6 +215,7 @@ ld_ldt:	lldt	%ax
 	shrl	$8,%eax
 	movb	%al,7(%rdx)
 
+	ALIGN_FOR_VENKMAN
 do_kthread:
 	/* Do we need to reload tss ? */
 	movq	PCPU(TSSP),%rax
@@ -206,6 +224,8 @@ do_kthread:
 	cmovzq	PCPU(COMMONTSSP),%rdx
 	cmpq	%rax,%rdx
 	jne	do_tss
+
+	ALIGN_FOR_VENKMAN
 done_tss:
 	movq	%r8,PCPU(RSP0)
 	movq	%r8,PCPU(CURPCB)
@@ -215,12 +235,18 @@ done_tss:
 	movq	PCPU(PTI_RSP0),%rax
 	movq	%rax,TSS_RSP0(%rdx)
 	jmp	2f
+
+	ALIGN_FOR_VENKMAN
 1:	movq	%r8,TSS_RSP0(%rdx)
+
+	ALIGN_FOR_VENKMAN
 2:	movq	%r12,PCPU(CURTHREAD)		/* into next thread */
 
 	/* Test if debug registers should be restored. */
 	testl	$PCB_DBREGS,PCB_FLAGS(%r8)
 	jnz	load_dr				/* static predict not taken */
+
+	ALIGN_FOR_VENKMAN
 done_load_dr:
 
 	/* Restore context. */
@@ -234,8 +260,9 @@ done_load_dr:
 	movq	PCB_RIP(%r8),%rax
 	movq	%rax,(%rsp)
 	movq	PCPU(CURTHREAD),%rdi
+	VENKMAN_PAD(15)
 	call	fpu_activate_sw
-	ret
+	VENKMAN_RET
 
 	/*
 	 * We order these strangely for several reasons.
@@ -247,6 +274,7 @@ done_load_dr:
 	 * We use jumps rather than call in order to avoid the stack.
 	 */
 
+	ALIGN_FOR_VENKMAN
 store_dr:
 	movq	%dr7,%rax			/* yes, do the save */
 	movq	%dr0,%r15
@@ -264,6 +292,7 @@ store_dr:
 	movq	%rax,%dr7
 	jmp	done_store_dr
 
+	ALIGN_FOR_VENKMAN
 load_dr:
 	movq	%dr7,%rax
 	movq	PCB_DR0(%r8),%r15
@@ -284,6 +313,7 @@ load_dr:
 	movq	%rax,%dr7
 	jmp	done_load_dr
 
+	ALIGN_FOR_VENKMAN
 do_tss:	movq	%rdx,PCPU(TSSP)
 	movq	%rdx,%rcx
 	movq	PCPU(TSS),%rax
@@ -299,6 +329,7 @@ do_tss:	movq	%rdx,PCPU(TSSP)
 	ltr	%ax
 	jmp	done_tss
 
+	ALIGN_FOR_VENKMAN
 do_ldt:	movq	PCPU(LDT),%rax
 	movq	P_MD+MD_LDT_SD(%rcx),%rdx
 	movq	%rdx,(%rax)
@@ -386,7 +417,7 @@ ENTRY(savectx)
 	str	PCB_TR(%rdi)
 
 	movl	$1,%eax
-	ret
+	VENKMAN_RET
 END(savectx)
 
 /*
@@ -497,5 +528,5 @@ ENTRY(resumectx)
 	movq	%rax,(%rsp)
 
 	xorl	%eax,%eax
-	ret
+	VENKMAN_RET
 END(resumectx)

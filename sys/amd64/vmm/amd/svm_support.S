@@ -122,12 +122,21 @@ ENTRY(svm_launch)
 	 */
 	mov $16, %ecx	/* 16 iterations, two calls per loop */
 	mov %rsp, %rax
-0:	call 2f		/* create an RSB entry. */
+	ALIGN_FOR_VENKMAN
+0:	VENKMAN_PAD(27)
+	call 2f		/* create an RSB entry. */
+	ALIGN_FOR_VENKMAN
 1:	pause
+	VENKMAN_PAD(25)
 	call 1b		/* capture rogue speculation. */
-2:	call 2f		/* create an RSB entry. */
+	ALIGN_FOR_VENKMAN
+2:	VENKMAN_PAD(27)
+	call 2f		/* create an RSB entry. */
+	ALIGN_FOR_VENKMAN
 1:	pause
+	VENKMAN_PAD(25)
 	call 1b		/* capture rogue speculation. */
+	ALIGN_FOR_VENKMAN
 2:	sub $1, %ecx
 	jnz 0b
 	mov %rax, %rsp
@@ -159,5 +168,5 @@ ENTRY(svm_launch)
 	xor %r11, %r11
 
 	VLEAVE
-	ret
+	VENKMAN_RET
 END(svm_launch)

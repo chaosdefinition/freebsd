@@ -110,13 +110,16 @@ ENTRY(x86_64_wrap)
 	mov	40+8(%rbp),%r8	# set up arg4 (stack+40 -> %r8)
 	mov	48+8(%rbp),%r9	# set up arg5 (stack+48 -> %r9)
 	xor	%rax,%rax	# clear return value
+
+	ALIGN_FOR_VENKMAN
 x86_64_wrap_call:
 	mov	$0xFF00FF00FF00FF00,%r11
-	callq	*%r11		# call routine
+	VENKMAN_PAD(15)
+	VENKMAN_CALLr(r11)	# call routine
 	mov	96-16(%rsp),%rdi# restore %rdi
 	mov	96-8(%rsp),%rsi	# restore %rsi
 	leave			# delete space on stack
-	ret
+	VENKMAN_RET
 x86_64_wrap_end:
 
 /*
@@ -127,34 +130,38 @@ x86_64_wrap_end:
 ENTRY(x86_64_call1)
 	subq	$40,%rsp
 	mov	%rsi,%rcx
-	call	*%rdi
+	VENKMAN_PAD(19)
+	VENKMAN_CALLr(rdi)
 	addq	$40,%rsp
-	ret
+	VENKMAN_RET
 
 ENTRY(x86_64_call2)
 	subq	$40,%rsp
 	mov	%rsi,%rcx
 	/* %rdx is already correct */
-	call	*%rdi
+	VENKMAN_PAD(19)
+	VENKMAN_CALLr(rdi)
 	addq	$40,%rsp
-	ret
+	VENKMAN_RET
 
 ENTRY(x86_64_call3)
 	subq	$40,%rsp
 	mov	%rcx,%r8
 	mov	%rsi,%rcx
-	call	*%rdi
+	VENKMAN_PAD(16)
+	VENKMAN_CALLr(rdi)
 	addq	$40,%rsp
-	ret
+	VENKMAN_RET
 
 ENTRY(x86_64_call4)
 	subq	$40,%rsp
 	mov	%r8,%r9
 	mov	%rcx,%r8
 	mov	%rsi,%rcx
-	call	*%rdi
+	VENKMAN_PAD(13)
+	VENKMAN_CALLr(rdi)
 	addq	$40,%rsp
-	ret
+	VENKMAN_RET
 
 ENTRY(x86_64_call5)
 	subq	$48,%rsp
@@ -162,9 +169,10 @@ ENTRY(x86_64_call5)
 	mov	%r8,%r9
 	mov	%rcx,%r8
 	mov	%rsi,%rcx
-	call	*%rdi
+	VENKMAN_PAD(8)
+	VENKMAN_CALLr(rdi)
 	addq	$48,%rsp
-	ret
+	VENKMAN_RET
 
 ENTRY(x86_64_call6)
 	subq	$56,%rsp
@@ -174,6 +182,7 @@ ENTRY(x86_64_call6)
 	mov	%r8,%r9
 	mov	%rcx,%r8
 	mov	%rsi,%rcx
-	call	*%rdi
+	VENKMAN_PAD(30)
+	VENKMAN_CALLr(rdi)
 	addq	$56,%rsp
-	ret
+	VENKMAN_RET

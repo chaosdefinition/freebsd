@@ -175,11 +175,15 @@ ENTRY(vmx_enter_guest)
 	invept	-16(%r11), %rax
 	jbe	invept_error		/* Check invept instruction error */
 
+	ALIGN_FOR_VENKMAN
 guest_restore:
 	movl	%edx, %r8d
 	cmpb	$0, guest_l1d_flush_sw(%rip)
 	je	after_l1d
+	VENKMAN_PAD(11)
 	call	flush_l1d_sw
+
+	ALIGN_FOR_VENKMAN
 after_l1d:
 	cmpl	$0, %r8d
 	je	do_launch
@@ -195,6 +199,7 @@ after_l1d:
 	movl	$VMX_VMRESUME_ERROR, %eax
 	jmp	decode_inst_error
 
+	ALIGN_FOR_VENKMAN
 do_launch:
 	VMX_GUEST_RESTORE
 	vmlaunch
@@ -208,14 +213,18 @@ do_launch:
 	movl	$VMX_VMLAUNCH_ERROR, %eax
 	jmp	decode_inst_error
 
+	ALIGN_FOR_VENKMAN
 invept_error:
 	movl	$VMX_INVEPT_ERROR, %eax
 	jmp	decode_inst_error
 
+	ALIGN_FOR_VENKMAN
 decode_inst_error:
 	movl	$VM_FAIL_VALID, %r11d
 	jz	inst_error
 	movl	$VM_FAIL_INVALID, %r11d
+
+	ALIGN_FOR_VENKMAN
 inst_error:
 	movl	%r11d, VMXCTX_INST_FAIL_STATUS(%rdi)
 
@@ -233,7 +242,7 @@ inst_error:
 
 	VMX_HOST_RESTORE
 	VLEAVE
-	ret
+	VENKMAN_RET
 
 /*
  * Non-error VM-exit from the guest. Make this a label so it can
@@ -266,12 +275,21 @@ vmx_exit_guest_flush_rsb:
 	 */
 	mov	$16, %ecx	/* 16 iterations, two calls per loop */
 	mov	%rsp, %rax
-0:	call	2f		/* create an RSB entry. */
+	ALIGN_FOR_VENKMAN
+0:	VENKMAN_PAD(27)
+	call	2f		/* create an RSB entry. */
+	ALIGN_FOR_VENKMAN
 1:	pause
+	VENKMAN_PAD(25)
 	call	1b		/* capture rogue speculation. */
-2:	call	2f		/* create an RSB entry. */
+	ALIGN_FOR_VENKMAN
+2:	VENKMAN_PAD(27)
+	call	2f		/* create an RSB entry. */
+	ALIGN_FOR_VENKMAN
 1:	pause
+	VENKMAN_PAD(25)
 	call	1b		/* capture rogue speculation. */
+	ALIGN_FOR_VENKMAN
 2:	sub	$1, %ecx
 	jnz	0b
 	mov	%rax, %rsp
@@ -282,8 +300,9 @@ vmx_exit_guest_flush_rsb:
 	 */
 	movl	$VMX_GUEST_VMEXIT, %eax
 	VLEAVE
-	ret
+	VENKMAN_RET
 
+	ALIGN_FOR_VENKMAN
 	.globl	vmx_exit_guest
 vmx_exit_guest:
 	/*
@@ -308,7 +327,7 @@ vmx_exit_guest:
 	 */
 	movl	$VMX_GUEST_VMEXIT, %eax
 	VLEAVE
-	ret
+	VENKMAN_RET
 END(vmx_enter_guest)
 
 /*
@@ -326,7 +345,8 @@ ENTRY(vmx_call_isr)
 	pushfq					/* %rflags */
 	pushq	$KERNEL_CS			/* %cs */
 	cli					/* disable interrupts */
-	callq	*%rdi				/* push %rip and call isr */
+	VENKMAN_PAD(7)
+	VENKMAN_CALLr(rdi)			/* push %rip and call isr */
 	VLEAVE
-	ret
+	VENKMAN_RET
 END(vmx_call_isr)

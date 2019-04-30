@@ -41,6 +41,7 @@
 	INTR_HANDLER	vmbus_isr
 	FAKE_MCOUNT(TF_RIP(%rsp))
 	movq	%rsp, %rdi
+	VENKMAN_PAD(24)
 	call	vmbus_handle_intr
 	MEXITCOUNT
 	jmp	doreti

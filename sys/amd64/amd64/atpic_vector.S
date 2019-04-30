@@ -47,6 +47,7 @@
 	FAKE_MCOUNT(TF_RIP(%rsp))
 	movq	%rsp, %rsi
 	movl	$\irq_num, %edi	 	/* pass the IRQ */
+	VENKMAN_PAD(19)
 	call	atpic_handle_intr
 	MEXITCOUNT
 	jmp	doreti

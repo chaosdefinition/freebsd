@@ -57,6 +57,7 @@
 	jz	1f;				\
 	cli;					\
 	swapgs;					\
+	ALIGN_FOR_VENKMAN;			\
 1:	addq	$TF_RIP,%rsp;
 
 
@@ -71,6 +72,7 @@
 	decq	%rdi
 	movq	%rsp, %rsi
 	movq	TF_RAX(%rsp), %rdx
+	VENKMAN_PAD(8)
 	call	dtrace_invop
 	ALTENTRY(dtrace_invop_callsite)
 	cmpl	$DTRACE_INVOP_PUSHL_EBP, %eax
@@ -83,8 +85,9 @@
 	je	bp_ret
 
 	/* When all else fails handle the trap in the usual way. */
-	jmpq	*dtrace_invop_calltrap_addr
+	VENKMAN_JMPm(dtrace_invop_calltrap_addr)
 
+	ALIGN_FOR_VENKMAN
 bp_push:
 	/*
 	 * We must emulate a "pushq %rbp".  To do this, we pull the stack
@@ -107,9 +110,10 @@ bp_push:
 	movq	32(%rsp), %rax		/* reload calling RSP */
 	movq	%rbp, (%rax)		/* store %rbp there */
 	popq	%rax			/* pop off temp */
-	iretq				/* return from interrupt */
+	VENKMAN_IRET			/* return from interrupt */
 	/*NOTREACHED*/
 
+	ALIGN_FOR_VENKMAN
 bp_leave:
 	/*
 	 * We must emulate a "leave", which is the same as a "movq %rbp, %rsp"
@@ -127,15 +131,17 @@ bp_leave:
 	movq	%rbp, 32(%rsp)		/* store new %rsp */
 	movq	%rax, %rbp		/* set new %rbp */
 	popq	%rax			/* pop off temp */
-	iretq				/* return from interrupt */
+	VENKMAN_IRET			/* return from interrupt */
 	/*NOTREACHED*/
 
+	ALIGN_FOR_VENKMAN
 bp_nop:
 	/* We must emulate a "nop". */
 	INTR_POP
-	iretq
+	VENKMAN_IRET
 	/*NOTREACHED*/
 
+	ALIGN_FOR_VENKMAN
 bp_ret:
 	INTR_POP
 	pushq	%rax			/* push temp */
@@ -144,7 +150,7 @@ bp_ret:
 	movq	%rax, 8(%rsp)		/* store calling RIP */
 	addq	$8, 32(%rsp)		/* adjust new %rsp */
 	popq	%rax			/* pop off temp */
-	iretq				/* return from interrupt */
+	VENKMAN_IRET			/* return from interrupt */
 	/*NOTREACHED*/
 
 	END(dtrace_invop_start)
@@ -154,7 +160,7 @@ void dtrace_invop_init(void)
 */
 	ENTRY(dtrace_invop_init)
 	movq	$dtrace_invop_start, dtrace_invop_jump_addr(%rip)
-	ret
+	VENKMAN_RET
 	END(dtrace_invop_init)
 
 /*
@@ -162,7 +168,7 @@ void dtrace_invop_uninit(void)
 */
 	ENTRY(dtrace_invop_uninit)
 	movq	$0, dtrace_invop_jump_addr(%rip)
-	ret
+	VENKMAN_RET
 	END(dtrace_invop_uninit)
 
 /*
@@ -170,7 +176,7 @@ greg_t dtrace_getfp(void)
 */
 	ENTRY(dtrace_getfp)
 	movq	%rbp, %rax
-	ret
+	VENKMAN_RET
 	END(dtrace_getfp)
 
 /*
@@ -181,7 +187,7 @@ dtrace_cas32(uint32_t *target, uint32_t cmp, uint32_t new)
 	movl	%esi, %eax
 	lock
 	cmpxchgl %edx, (%rdi)
-	ret
+	VENKMAN_RET
 	END(dtrace_cas32)
 
 /*
@@ -192,7 +198,7 @@ dtrace_casptr(void *target, void *cmp, void *new)
 	movq	%rsi, %rax
 	lock
 	cmpxchgq %rdx, (%rdi)
-	ret
+	VENKMAN_RET
 	END(dtrace_casptr)
 
 /*
@@ -201,7 +207,7 @@ dtrace_caller(int aframes)
 */
 	ENTRY(dtrace_caller)
 	movq	$-1, %rax
-	ret
+	VENKMAN_RET
 	END(dtrace_caller)
 
 /*
@@ -217,7 +223,7 @@ dtrace_copy(uintptr_t src, uintptr_t dest, size_t size)
 	repz				/* repeat for count ... */
 	smovb				/*   move from %ds:rsi to %ed:rdi */
 	leave
-	ret
+	VENKMAN_RET
 	END(dtrace_copy)
 
 /*
@@ -229,6 +235,7 @@ dtrace_copystr(uintptr_t uaddr, uintptr_t kaddr, size_t size,
 	pushq	%rbp
 	movq	%rsp, %rbp
 
+	ALIGN_FOR_VENKMAN
 0:
 	movb	(%rdi), %al		/* load from source */
 	movb	%al, (%rsi)		/* store to destination */
@@ -241,12 +248,16 @@ dtrace_copystr(uintptr_t uaddr, uintptr_t kaddr, size_t size,
 	jnz	1f			/* if not, continue with copying */
 	testq	$CPU_DTRACE_BADADDR, (%rcx) /* load and test dtrace flags */
 	jnz	2f
+
+	ALIGN_FOR_VENKMAN
 1:
 	cmpq	$0, %rdx
 	jne	0b
+
+	ALIGN_FOR_VENKMAN
 2:
 	leave
-	ret
+	VENKMAN_RET
 
 	END(dtrace_copystr)
 
@@ -256,7 +267,7 @@ dtrace_fulword(void *addr)
 */
 	ENTRY(dtrace_fulword)
 	movq	(%rdi), %rax
-	ret
+	VENKMAN_RET
 	END(dtrace_fulword)
 
 /*
@@ -266,7 +277,7 @@ dtrace_fuword8_nocheck(void *addr)
 	ENTRY(dtrace_fuword8_nocheck)
 	xorq	%rax, %rax
 	movb	(%rdi), %al
-	ret
+	VENKMAN_RET
 	END(dtrace_fuword8_nocheck)
 
 /*
@@ -276,7 +287,7 @@ dtrace_fuword16_nocheck(void *addr)
 	ENTRY(dtrace_fuword16_nocheck)
 	xorq	%rax, %rax
 	movw	(%rdi), %ax
-	ret
+	VENKMAN_RET
 	END(dtrace_fuword16_nocheck)
 
 /*
@@ -286,7 +297,7 @@ dtrace_fuword32_nocheck(void *addr)
 	ENTRY(dtrace_fuword32_nocheck)
 	xorq	%rax, %rax
 	movl	(%rdi), %eax
-	ret
+	VENKMAN_RET
 	END(dtrace_fuword32_nocheck)
 
 /*
@@ -295,7 +306,7 @@ dtrace_fuword64_nocheck(void *addr)
 */
 	ENTRY(dtrace_fuword64_nocheck)
 	movq	(%rdi), %rax
-	ret
+	VENKMAN_RET
 	END(dtrace_fuword64_nocheck)
 
 /*
@@ -314,10 +325,11 @@ dtrace_probe_error(dtrace_state_t *state, dtrace_epid_t epid, int which,
 	movq	%rsi, %rdx
 	movq	%rdi, %rsi
 	movl	dtrace_probeid_error(%rip), %edi
+	VENKMAN_PAD(26)
 	call	dtrace_probe
 	addq	$0x8, %rsp
 	leave
-	ret
+	VENKMAN_RET
 	END(dtrace_probe_error)
 
 /*
@@ -325,8 +337,7 @@ void
 dtrace_membar_producer(void)
 */
 	ENTRY(dtrace_membar_producer)
-	rep;	ret	/* use 2 byte return instruction when branch target */
-			/* AMD Software Optimization Guide - Section 6.2 */
+	VENKMAN_RET
 	END(dtrace_membar_producer)
 
 /*
@@ -334,8 +345,7 @@ void
 dtrace_membar_consumer(void)
 */
 	ENTRY(dtrace_membar_consumer)
-	rep;	ret	/* use 2 byte return instruction when branch target */
-			/* AMD Software Optimization Guide - Section 6.2 */
+	VENKMAN_RET
 	END(dtrace_membar_consumer)
 
 /*
@@ -346,7 +356,7 @@ dtrace_interrupt_disable(void)
 	pushfq
 	popq	%rax
 	cli
-	ret
+	VENKMAN_RET
 	END(dtrace_interrupt_disable)
 
 /*
@@ -356,5 +366,5 @@ dtrace_interrupt_enable(dtrace_icookie_t cookie)
 	ENTRY(dtrace_interrupt_enable)
 	pushq	%rdi
 	popfq
-	ret
+	VENKMAN_RET
 	END(dtrace_interrupt_enable)

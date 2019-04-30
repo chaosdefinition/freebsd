@@ -29,6 +29,8 @@
 #define SUPERALIGN_TEXT		.p2align BUNDLE_ALIGNMENT,0x90
 #endif /* SUPERALIGN_TEXT */
 
+#define ALIGN_FOR_VENKMAN	.p2align BUNDLE_ALIGNMENT,0x90
+
 /* Redefine profiling related macros for bundle alignment */
 #ifdef PROF
 #ifdef ENTRY
@@ -73,6 +75,7 @@
 #endif /* GPROF */
 
 /* Macros for creating code padding */
+#define VENKMAN_PAD_0
 #define VENKMAN_PAD_1		nop
 #define VENKMAN_PAD_2		xchg %ax,%ax
 #define VENKMAN_PAD_3		nopl (%rax)
@@ -120,8 +123,14 @@
 #define VENKMAN_JMPr(reg)	andq	$-BUNDLE_SIZE, %reg;		\
 				jmpq	*%reg
 
+#define VENKMAN_JMPm(addr)	andq	$-BUNDLE_SIZE, addr;		\
+				jmpq	*addr
+
 #define VENKMAN_CALLr(reg)	andq	$-BUNDLE_SIZE, %reg;		\
 				callq	*%reg
+
+#define VENKMAN_CALLm(addr)	andq	$-BUNDLE_SIZE, addr;		\
+				callq	*addr
 
 #define VENKMAN_RET		popq	%rcx;				\
 				VENKMAN_JMPr(rcx)
@@ -134,11 +143,18 @@
 #define VENKMAN_RET_NOREG	andq	$-BUNDLE_SIZE, (%rsp);		\
 				retq
 
+#define VENKMAN_IRET		andq	$-BUNDLE_SIZE, (%rsp);		\
+				iretq
+
 #else /* !VENKMAN_CFI */
 
 #define VENKMAN_JMPr(reg)	VENKMAN_PAD(4); jmpq	*%reg
 
+#define VENKMAN_JMPm(addr)	VENKMAN_PAD(9); jmpq	*addr
+
 #define VENKMAN_CALLr(reg)	VENKMAN_PAD(4); callq	*%reg
+
+#define VENKMAN_CALLm(addr)	VENKMAN_PAD(9); callq	*addr
 
 #define VENKMAN_RET		VENKMAN_PAD(6); ret
 
@@ -146,19 +162,29 @@
 
 #define VENKMAN_RET_NOREG	VENKMAN_RET
 
+#define VENKMAN_IRET		VENKMAN_PAD(6); iretq
+
 #endif /* !VENKMAN_CFI */
 
 #else /* !VENKMAN */
 
+#define ALIGN_FOR_VENKMAN
+
 #define VENKMAN_JMPr(reg)	jmpq	*%reg
 
+#define VENKMAN_JMPm(addr)	jmpq	*addr
+
 #define VENKMAN_CALLr(reg)	callq	*%reg
+
+#define VENKMAN_CALLm(addr)	callq	*addr
 
 #define VENKMAN_RET		ret
 
 #define VENKMAN_RETI(imm)	ret	$imm
 
 #define VENKMAN_RET_NOREG	VENKMAN_RET
+
+#define VENKMAN_IRET		iretq
 
 #endif /* !VENKMAN */
 

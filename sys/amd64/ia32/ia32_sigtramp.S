@@ -40,26 +40,44 @@
 	ALIGN_TEXT
 	.globl	ia32_sigcode
 ia32_sigcode:
-	calll	*IA32_SIGF_HANDLER(%esp)
+#ifdef VENKMAN
+	.skip 23, 0x90
+	andl $-BUNDLE_SIZE,IA32_SIGF_HANDLER(%esp)
+#endif
+	calll *IA32_SIGF_HANDLER(%esp)
 	leal	IA32_SIGF_UC(%esp),%eax	/* get ucontext */
 	pushl	%eax
 	movl	$SYS_sigreturn,%eax
 	pushl	%eax			/* junk to fake return addr. */
+#ifdef VENKMAN
+	.skip 19, 0x90
+#endif
 	int	$0x80			/* enter kernel with args */
 					/* on stack */
+
+	ALIGN_FOR_VENKMAN
 1:
 	jmp	1b
 
 #ifdef COMPAT_FREEBSD4
 	ALIGN_TEXT
 freebsd4_ia32_sigcode:
-	calll	*IA32_SIGF_HANDLER(%esp)
+#ifdef VENKMAN
+	.skip 23, 0x90
+	andl $-BUNDLE_SIZE,IA32_SIGF_HANDLER(%esp)
+#endif
+	calll *IA32_SIGF_HANDLER(%esp)
 	leal	IA32_SIGF_UC4(%esp),%eax/* get ucontext */
 	pushl	%eax
 	movl	$344,%eax		/* 4.x SYS_sigreturn */
 	pushl	%eax			/* junk to fake return addr. */
+#ifdef VENKMAN
+	.skip 19, 0x90
+#endif
 	int	$0x80			/* enter kernel with args */
 					/* on stack */
+
+	ALIGN_FOR_VENKMAN
 1:
 	jmp	1b
 #endif
@@ -67,12 +85,21 @@ freebsd4_ia32_sigcode:
 #ifdef COMPAT_43
 	ALIGN_TEXT
 ia32_osigcode:
-	calll	*IA32_SIGF_HANDLER(%esp)/* call signal handler */
+#ifdef VENKMAN
+	.skip 23, 0x90
+	andl $-BUNDLE_SIZE,IA32_SIGF_HANDLER(%esp)
+#endif
+	calll *IA32_SIGF_HANDLER(%esp)/* call signal handler */
 	leal	IA32_SIGF_SC(%esp),%eax	/* get sigcontext */
 	pushl	%eax
 	movl	$103,%eax		/* 3.x SYS_sigreturn */
 	pushl	%eax			/* junk to fake return addr. */
+#ifdef VENKMAN
+	.skip 19, 0x90
+#endif
 	int	$0x80			/* enter kernel with args */
+
+	ALIGN_FOR_VENKMAN
 1:
 	jmp	1b
 
@@ -91,7 +118,12 @@ ia32_osigcode:
  */
 	ALIGN_TEXT
 lcall_tramp:
+#ifdef VENKMAN
+	.skip 30, 0x90
+#endif
 	int	$0x80
+
+	ALIGN_FOR_VENKMAN
 1:	jmp	1b
 #endif
 

@@ -87,11 +87,14 @@ NON_GPROF_ENTRY(xen_start)
 	xorl	%ebp, %ebp
 
 	/* u_int64_t hammer_time_xen(start_info_t *si, u_int64_t xenstack); */
+	VENKMAN_PAD(9)
 	call	hammer_time_xen_legacy
 	movq	%rax, %rsp		/* set up kstack for mi_startup() */
+	VENKMAN_PAD(24)
 	call	mi_startup		/* autoconfiguration, mountroot etc */
 
 	/* NOTREACHED */
+	ALIGN_FOR_VENKMAN
 0:	hlt
 	jmp 	0b
 
@@ -104,6 +107,7 @@ NON_GPROF_ENTRY(xen_start32)
 	lgdt	(%eax)
 	jmp	$GDT_CODE, $VTOP(reload_cs)
 
+	ALIGN_FOR_VENKMAN
 reload_cs:
 	movw	$GDT_DATA, %ax
 	movw	%ax, %ds
@@ -121,6 +125,7 @@ reload_cs:
 	 * The first 1GB is mapped using 2MB entries.
 	 */
 	movl	$0, %eax
+	ALIGN_FOR_VENKMAN
 pgbuild:
 	cmp	$(PAGE_SIZE/ENTRY_SIZE), %eax
 	jae	pgbuild_done
@@ -147,6 +152,7 @@ pgbuild:
 	inc	%eax
 	jmp	pgbuild
 
+	ALIGN_FOR_VENKMAN
 pgbuild_done:
 	/* Turn on EFER.LME */
 	movl	$MSR_EFER, %ecx
@@ -174,24 +180,29 @@ pgbuild_done:
 	ljmp	$GDT_CODE, $VTOP(longmode)
 
 	.code64
+	ALIGN_FOR_VENKMAN
 longmode:
 	/* We're still running V=P, jump to entry point */
 	movq	$bootstack, %rsp
 	movq	$start_kernel, %rax
 	pushq	%rax
-	ret
+	VENKMAN_RET
 
+	ALIGN_FOR_VENKMAN
 start_kernel:
 	/*
 	 * Pass %ebx as the argument to hammer_time_xen, it contains
 	 * the startup info.
 	 */
 	movq	%rbx, %rdi
+	VENKMAN_PAD(24)
 	call	hammer_time_xen
 	movq	%rax, %rsp
+	VENKMAN_PAD(24)
 	call	mi_startup
 
 	/* NOTREACHED */
+	ALIGN_FOR_VENKMAN
 0:	hlt
 	jmp 	0b
 

@@ -78,10 +78,14 @@ ENTRY(efi_rt_arch_call)
 	decl	%ebx
 	jz	1f
 	movq	$efi_rt_panic_str, %rdi
+	VENKMAN_PAD(28)
 	call	panic
+
+	ALIGN_FOR_VENKMAN
 1:	movq	EC_FPTR(%rdi), %rax
 	movq	$efi_rt_fault, PCB_ONFAULT(%rsi)
-	callq	*%rax
+	VENKMAN_PAD(11)
+	VENKMAN_CALLr(rax)
 
 	movq	PCPU(CURTHREAD), %rbx
 	movq	TD_MD+MD_EFIRT_TMP(%rbx), %rdi
@@ -90,6 +94,7 @@ ENTRY(efi_rt_arch_call)
 	xorl	%eax, %eax
 	movq	%rax, PCB_ONFAULT(%rsi)
 
+	ALIGN_FOR_VENKMAN
 efi_rt_arch_call_tail:
 	movq	EC_R15(%rdi), %r15
 	movq	EC_R14(%rdi), %r14
@@ -100,7 +105,7 @@ efi_rt_arch_call_tail:
 	movq	EC_RBX(%rdi), %rbx
 
 	popq	%rbp
-	ret
+	VENKMAN_RET
 END(efi_rt_arch_call)
 
 ENTRY(efi_rt_fault)

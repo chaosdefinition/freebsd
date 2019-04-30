@@ -142,6 +142,8 @@
 #define MEXITCOUNT
 #endif /* GPROF */
 
+#include <machine/venkman.h>
+
 /*
  * Convenience for adding frame pointers to hand-coded ASM.  Useful for
  * DTrace, HWPMC, and KDB.
@@ -201,6 +203,8 @@
 	pushq	%rax
 	pushq	%rdx
 	PTI_UUENTRY \has_err
+
+	ALIGN_FOR_VENKMAN
 1:
 	.endm
 
@@ -236,6 +240,7 @@ X\vec_name:
 	testb	$SEL_RPL_MASK,PTI_CS-3*8(%rsp) /* come from kernel? */
 	jz	.L\vec_name\()_u		/* Yes, dont swapgs again */
 	swapgs
+	ALIGN_FOR_VENKMAN
 .L\vec_name\()_u:
 	subq	$TF_RIP,%rsp	/* skip dummy tf_err and tf_trapno */
 	movq	%rdi,TF_RDI(%rsp)
@@ -262,7 +267,10 @@ X\vec_name:
 	jz	1f		/* yes, leave PCB_FULL_IRET alone */
 	movq	PCPU(CURPCB),%r8
 	andl	$~PCB_FULL_IRET,PCB_FLAGS(%r8)
+	VENKMAN_PAD(0)
 	call	handle_ibrs_entry
+
+	ALIGN_FOR_VENKMAN
 1:
 	.endm
 
@@ -317,7 +325,5 @@ X\vec_name:
 4:.align 4                              ;       \
 .popsection
 #endif /* __STDC__ */
-
-#include <machine/venkman.h>
 
 #endif /* !_MACHINE_ASMACROS_H_ */

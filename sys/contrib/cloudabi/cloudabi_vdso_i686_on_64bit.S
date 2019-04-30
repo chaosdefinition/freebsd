@@ -25,14 +25,28 @@
 //
 // Source: https://github.com/NuxiNL/cloudabi
 
-#define ENTRY(name)      \
-  .text;                 \
-  .p2align 2, 0x90;      \
-  .global name;          \
-  .type name, @function; \
-name:
+#include <machine/asmacros.h>
 
-#define END(name) .size name, . - name
+/* The VENKMAN_* macros use 64-bit registers which are unavailable in 32-bit
+ * mode
+ */
+#ifdef VENKMAN_PAD
+#undef VENKMAN_PAD
+#endif
+#ifdef VENKMAN_RET_NOREG
+#undef VENKMAN_RET_NOREG
+#endif
+#ifdef VENKMAN
+#define VENKMAN_PAD(bytes) .skip bytes, 0x90
+#ifdef VENKMAN_CFI
+#define VENKMAN_RET_NOREG andl $-BUNDLE_SIZE, (%esp); ret
+#else
+#define VENKMAN_RET_NOREG ret
+#endif
+#else
+#define VENKMAN_PAD(bytes)
+#define VENKMAN_RET_NOREG ret
+#endif
 
 ENTRY(cloudabi_sys_clock_res_get)
   push %ebp
@@ -42,6 +56,7 @@ ENTRY(cloudabi_sys_clock_res_get)
   mov $0, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   test %eax, %eax
   jnz 1f
@@ -50,9 +65,11 @@ ENTRY(cloudabi_sys_clock_res_get)
   mov %edx, 0(%ecx)
   mov -12(%ebp), %edx
   mov %edx, 4(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_clock_res_get)
 
 ENTRY(cloudabi_sys_clock_time_get)
@@ -67,6 +84,7 @@ ENTRY(cloudabi_sys_clock_time_get)
   mov $1, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(31)
   int $0x80
   test %eax, %eax
   jnz 1f
@@ -75,9 +93,11 @@ ENTRY(cloudabi_sys_clock_time_get)
   mov %edx, 0(%ecx)
   mov -12(%ebp), %edx
   mov %edx, 4(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_clock_time_get)
 
 ENTRY(cloudabi_sys_condvar_signal)
@@ -93,9 +113,10 @@ ENTRY(cloudabi_sys_condvar_signal)
   mov $2, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(24)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_condvar_signal)
 
 ENTRY(cloudabi_sys_fd_close)
@@ -106,9 +127,10 @@ ENTRY(cloudabi_sys_fd_close)
   mov $3, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_close)
 
 ENTRY(cloudabi_sys_fd_create1)
@@ -119,15 +141,18 @@ ENTRY(cloudabi_sys_fd_create1)
   mov $4, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 12(%ebp), %ecx
   mov -16(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_create1)
 
 ENTRY(cloudabi_sys_fd_create2)
@@ -138,6 +163,7 @@ ENTRY(cloudabi_sys_fd_create2)
   mov $5, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   test %eax, %eax
   jnz 1f
@@ -147,9 +173,11 @@ ENTRY(cloudabi_sys_fd_create2)
   mov 16(%ebp), %ecx
   mov -8(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_create2)
 
 ENTRY(cloudabi_sys_fd_datasync)
@@ -160,9 +188,10 @@ ENTRY(cloudabi_sys_fd_datasync)
   mov $6, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_datasync)
 
 ENTRY(cloudabi_sys_fd_dup)
@@ -173,15 +202,18 @@ ENTRY(cloudabi_sys_fd_dup)
   mov $7, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 12(%ebp), %ecx
   mov -16(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_dup)
 
 ENTRY(cloudabi_sys_fd_pread)
@@ -202,15 +234,18 @@ ENTRY(cloudabi_sys_fd_pread)
   mov $8, %eax
   mov %ebp, %ecx
   sub $32, %ecx
+  VENKMAN_PAD(5)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 28(%ebp), %ecx
   mov -32(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_pread)
 
 ENTRY(cloudabi_sys_fd_pwrite)
@@ -231,15 +266,18 @@ ENTRY(cloudabi_sys_fd_pwrite)
   mov $9, %eax
   mov %ebp, %ecx
   sub $32, %ecx
+  VENKMAN_PAD(5)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 28(%ebp), %ecx
   mov -32(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_pwrite)
 
 ENTRY(cloudabi_sys_fd_read)
@@ -256,15 +294,18 @@ ENTRY(cloudabi_sys_fd_read)
   mov $10, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 20(%ebp), %ecx
   mov -24(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_read)
 
 ENTRY(cloudabi_sys_fd_replace)
@@ -277,9 +318,10 @@ ENTRY(cloudabi_sys_fd_replace)
   mov $11, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(5)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_replace)
 
 ENTRY(cloudabi_sys_fd_seek)
@@ -296,6 +338,7 @@ ENTRY(cloudabi_sys_fd_seek)
   mov $12, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(25)
   int $0x80
   test %eax, %eax
   jnz 1f
@@ -304,9 +347,11 @@ ENTRY(cloudabi_sys_fd_seek)
   mov %edx, 0(%ecx)
   mov -20(%ebp), %edx
   mov %edx, 4(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_seek)
 
 ENTRY(cloudabi_sys_fd_stat_get)
@@ -320,9 +365,10 @@ ENTRY(cloudabi_sys_fd_stat_get)
   mov $13, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(30)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_stat_get)
 
 ENTRY(cloudabi_sys_fd_stat_put)
@@ -338,9 +384,10 @@ ENTRY(cloudabi_sys_fd_stat_put)
   mov $14, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(24)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_stat_put)
 
 ENTRY(cloudabi_sys_fd_sync)
@@ -351,9 +398,10 @@ ENTRY(cloudabi_sys_fd_sync)
   mov $15, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_sync)
 
 ENTRY(cloudabi_sys_fd_write)
@@ -370,15 +418,18 @@ ENTRY(cloudabi_sys_fd_write)
   mov $16, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 20(%ebp), %ecx
   mov -24(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_fd_write)
 
 ENTRY(cloudabi_sys_file_advise)
@@ -399,9 +450,10 @@ ENTRY(cloudabi_sys_file_advise)
   mov $17, %eax
   mov %ebp, %ecx
   sub $32, %ecx
+  VENKMAN_PAD(13)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_advise)
 
 ENTRY(cloudabi_sys_file_allocate)
@@ -420,9 +472,10 @@ ENTRY(cloudabi_sys_file_allocate)
   mov $18, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(19)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_allocate)
 
 ENTRY(cloudabi_sys_file_create)
@@ -441,9 +494,10 @@ ENTRY(cloudabi_sys_file_create)
   mov $19, %eax
   mov %ebp, %ecx
   sub $32, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_create)
 
 ENTRY(cloudabi_sys_file_link)
@@ -470,9 +524,10 @@ ENTRY(cloudabi_sys_file_link)
   mov $20, %eax
   mov %ebp, %ecx
   sub $48, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_link)
 
 ENTRY(cloudabi_sys_file_open)
@@ -496,15 +551,18 @@ ENTRY(cloudabi_sys_file_open)
   mov $21, %eax
   mov %ebp, %ecx
   sub $40, %ecx
+  VENKMAN_PAD(24)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 32(%ebp), %ecx
   mov -40(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_open)
 
 ENTRY(cloudabi_sys_file_readdir)
@@ -525,15 +583,18 @@ ENTRY(cloudabi_sys_file_readdir)
   mov $22, %eax
   mov %ebp, %ecx
   sub $32, %ecx
+  VENKMAN_PAD(5)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 28(%ebp), %ecx
   mov -32(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_readdir)
 
 ENTRY(cloudabi_sys_file_readlink)
@@ -556,15 +617,18 @@ ENTRY(cloudabi_sys_file_readlink)
   mov $23, %eax
   mov %ebp, %ecx
   sub $40, %ecx
+  VENKMAN_PAD(23)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 28(%ebp), %ecx
   mov -40(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_readlink)
 
 ENTRY(cloudabi_sys_file_rename)
@@ -589,9 +653,10 @@ ENTRY(cloudabi_sys_file_rename)
   mov $24, %eax
   mov %ebp, %ecx
   sub $48, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_rename)
 
 ENTRY(cloudabi_sys_file_stat_fget)
@@ -605,9 +670,10 @@ ENTRY(cloudabi_sys_file_stat_fget)
   mov $25, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(30)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_stat_fget)
 
 ENTRY(cloudabi_sys_file_stat_fput)
@@ -623,9 +689,10 @@ ENTRY(cloudabi_sys_file_stat_fput)
   mov $26, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(24)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_stat_fput)
 
 ENTRY(cloudabi_sys_file_stat_get)
@@ -647,9 +714,10 @@ ENTRY(cloudabi_sys_file_stat_get)
   mov $27, %eax
   mov %ebp, %ecx
   sub $32, %ecx
+  VENKMAN_PAD(30)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_stat_get)
 
 ENTRY(cloudabi_sys_file_stat_put)
@@ -673,9 +741,10 @@ ENTRY(cloudabi_sys_file_stat_put)
   mov $28, %eax
   mov %ebp, %ecx
   sub $40, %ecx
+  VENKMAN_PAD(24)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_stat_put)
 
 ENTRY(cloudabi_sys_file_symlink)
@@ -698,9 +767,10 @@ ENTRY(cloudabi_sys_file_symlink)
   mov $29, %eax
   mov %ebp, %ecx
   sub $40, %ecx
+  VENKMAN_PAD(23)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_symlink)
 
 ENTRY(cloudabi_sys_file_unlink)
@@ -719,9 +789,10 @@ ENTRY(cloudabi_sys_file_unlink)
   mov $30, %eax
   mov %ebp, %ecx
   sub $32, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_file_unlink)
 
 ENTRY(cloudabi_sys_lock_unlock)
@@ -735,9 +806,10 @@ ENTRY(cloudabi_sys_lock_unlock)
   mov $31, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(30)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_lock_unlock)
 
 ENTRY(cloudabi_sys_mem_advise)
@@ -754,9 +826,10 @@ ENTRY(cloudabi_sys_mem_advise)
   mov $32, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_mem_advise)
 
 ENTRY(cloudabi_sys_mem_map)
@@ -781,15 +854,18 @@ ENTRY(cloudabi_sys_mem_map)
   mov $33, %eax
   mov %ebp, %ecx
   sub $48, %ecx
+  VENKMAN_PAD(25)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 36(%ebp), %ecx
   mov -48(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_mem_map)
 
 ENTRY(cloudabi_sys_mem_protect)
@@ -806,9 +882,10 @@ ENTRY(cloudabi_sys_mem_protect)
   mov $34, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_mem_protect)
 
 ENTRY(cloudabi_sys_mem_sync)
@@ -825,9 +902,10 @@ ENTRY(cloudabi_sys_mem_sync)
   mov $35, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_mem_sync)
 
 ENTRY(cloudabi_sys_mem_unmap)
@@ -842,9 +920,10 @@ ENTRY(cloudabi_sys_mem_unmap)
   mov $36, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(23)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_mem_unmap)
 
 ENTRY(cloudabi_sys_poll)
@@ -862,15 +941,18 @@ ENTRY(cloudabi_sys_poll)
   mov $37, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(10)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 20(%ebp), %ecx
   mov -24(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_poll)
 
 ENTRY(cloudabi_sys_proc_exec)
@@ -893,9 +975,10 @@ ENTRY(cloudabi_sys_proc_exec)
   mov $38, %eax
   mov %ebp, %ecx
   sub $40, %ecx
+  VENKMAN_PAD(23)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_proc_exec)
 
 ENTRY(cloudabi_sys_proc_exit)
@@ -906,6 +989,7 @@ ENTRY(cloudabi_sys_proc_exit)
   mov $39, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
 END(cloudabi_sys_proc_exit)
 
@@ -915,6 +999,7 @@ ENTRY(cloudabi_sys_proc_fork)
   mov $40, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   test %eax, %eax
   jnz 1f
@@ -924,9 +1009,11 @@ ENTRY(cloudabi_sys_proc_fork)
   mov 12(%ebp), %ecx
   mov -8(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_proc_fork)
 
 ENTRY(cloudabi_sys_proc_raise)
@@ -937,9 +1024,10 @@ ENTRY(cloudabi_sys_proc_raise)
   mov $41, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(11)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_proc_raise)
 
 ENTRY(cloudabi_sys_random_get)
@@ -954,9 +1042,10 @@ ENTRY(cloudabi_sys_random_get)
   mov $42, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(23)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_random_get)
 
 ENTRY(cloudabi_sys_sock_recv)
@@ -973,9 +1062,10 @@ ENTRY(cloudabi_sys_sock_recv)
   mov $43, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_sock_recv)
 
 ENTRY(cloudabi_sys_sock_send)
@@ -992,9 +1082,10 @@ ENTRY(cloudabi_sys_sock_send)
   mov $44, %eax
   mov %ebp, %ecx
   sub $24, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_sock_send)
 
 ENTRY(cloudabi_sys_sock_shutdown)
@@ -1007,9 +1098,10 @@ ENTRY(cloudabi_sys_sock_shutdown)
   mov $45, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(5)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_sock_shutdown)
 
 ENTRY(cloudabi_sys_thread_create)
@@ -1021,15 +1113,18 @@ ENTRY(cloudabi_sys_thread_create)
   mov $46, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(4)
   int $0x80
   test %eax, %eax
   jnz 1f
   mov 12(%ebp), %ecx
   mov -16(%ebp), %edx
   mov %edx, 0(%ecx)
+
+  ALIGN_FOR_VENKMAN
 1:
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_thread_create)
 
 ENTRY(cloudabi_sys_thread_exit)
@@ -1043,6 +1138,7 @@ ENTRY(cloudabi_sys_thread_exit)
   mov $47, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(30)
   int $0x80
 END(cloudabi_sys_thread_exit)
 
@@ -1052,7 +1148,8 @@ ENTRY(cloudabi_sys_thread_yield)
   mov $48, %eax
   mov %ebp, %ecx
   sub $16, %ecx
+  VENKMAN_PAD(17)
   int $0x80
   pop %ebp
-  ret
+  VENKMAN_RET_NOREG
 END(cloudabi_sys_thread_yield)

@@ -31,9 +31,14 @@
 
 #include "assym.inc"
 
+/* For non-Venkman */
+#ifndef BUNDLE_ALIGNMENT
+#define BUNDLE_ALIGNMENT 4
+#endif
+
 	.data				/* So we can modify it */
 
-	.p2align 4,0
+	.p2align BUNDLE_ALIGNMENT,0
 	.globl	mptramp_start
 mptramp_start:
 	.code16
@@ -85,6 +90,7 @@ jmp_32:
 	/*
 	 * At this point, we are running in 32 bit legacy protected mode.
 	 */
+	ALIGN_FOR_VENKMAN
 	.code32
 protmode:
 	mov	$bootdata-gdt, %eax
@@ -155,10 +161,11 @@ jmp_64:
 	 * space. Remember that jmp is relative and that we've been relocated,
 	 * so use an indirect jump.
 	 */
+	ALIGN_FOR_VENKMAN
 	.code64
 tramp_64:
 	movabsq	$entry_64,%rax		/* 64 bit immediate load */
-	jmp	*%rax
+	VENKMAN_JMPr(rax)
 
 	.p2align 4,0
 gdt:
@@ -230,7 +237,7 @@ bootMP_size:
 	 */
 	.text
 	.code64
-	.p2align 4,0
+	.p2align BUNDLE_ALIGNMENT,0
 entry_64:
 	/*
 	 * If the BSP reported NXE support, enable EFER.NXE for all APs
@@ -246,6 +253,7 @@ entry_64:
 	orl	$EFER_NXE, %eax
 	wrmsr
 
+	ALIGN_FOR_VENKMAN
 1:
 	/*
 	 * Load a real %cr3 that has all the direct map stuff and switches

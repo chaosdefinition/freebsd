@@ -27,17 +27,19 @@
 
 #define	_ASM
 #include <sys/asm_linkage.h>
+#include <machine/asmacros.h>
 
 	ENTRY(atomic_add_64_nv)
 	mov	%rsi, %rax		// %rax = delta addend
 	lock
 	  xaddq	%rsi, (%rdi)		// %rsi = old value, (%rdi) = sum
 	addq	%rsi, %rax		// new value = original value + delta
-	ret
+	VENKMAN_RET
 	SET_SIZE(atomic_add_64_nv)
 
 	ENTRY(atomic_or_8_nv)
 	movb	(%rdi), %al	// %al = old value
+	ALIGN_FOR_VENKMAN
 1:
 	movb	%sil, %cl
 	orb	%al, %cl	// %cl = new value
@@ -45,24 +47,24 @@
 	cmpxchgb %cl, (%rdi)	// try to stick it in
 	jne	1b
 	movzbl	%cl, %eax	// return new value
-	ret
+	VENKMAN_RET
 	SET_SIZE(atomic_or_8_nv)
 
 	ENTRY(atomic_cas_32)
 	movl	%esi, %eax
 	lock
 	cmpxchgl %edx, (%rdi)
-	ret
+	VENKMAN_RET
 	SET_SIZE(atomic_cas_32)
 
 	ENTRY(atomic_cas_64)
 	movq	%rsi, %rax
 	lock
 	cmpxchgq %rdx, (%rdi)
-	ret
+	VENKMAN_RET
 	SET_SIZE(atomic_cas_64)
 
 	ENTRY(membar_producer)
 	sfence
-	ret
+	VENKMAN_RET
 	SET_SIZE(membar_producer)

@@ -19,43 +19,54 @@ linux_platform:
  */
 NON_GPROF_ENTRY(linux_rt_sigcode)
 	movq	%rsp, %rbx			/* preserve sigframe */
+	VENKMAN_PAD(24)
 	call	.getip
+
+	ALIGN_FOR_VENKMAN
 .getip:
 	popq	%rax
 	add	$.startrtsigcode-.getip, %rax	/* ret address */
 	pushq	%rax
-	jmp	*LINUX_RT_SIGF_HANDLER(%rbx)
+	VENKMAN_JMPm(LINUX_RT_SIGF_HANDLER(%rbx))
+
+	ALIGN_FOR_VENKMAN
 .startrtsigcode:
 	movq	$LINUX_SYS_linux_rt_sigreturn,%rax   /* linux_rt_sigreturn() */
+	VENKMAN_PAD(23)
 	syscall					/* enter kernel with args */
 	hlt
+
+	ALIGN_FOR_VENKMAN
 .endrtsigcode:
 0:	jmp	0b
 
 NON_GPROF_ENTRY(__vdso_clock_gettime)
 	movq	$LINUX_SYS_linux_clock_gettime,%rax
+	VENKMAN_PAD(23)
 	syscall
-	ret
+	VENKMAN_RET
 .weak clock_gettime
 .set clock_gettime, __vdso_clock_gettime
 
 NON_GPROF_ENTRY(__vdso_time)
 	movq	$LINUX_SYS_linux_time,%rax
+	VENKMAN_PAD(23)
 	syscall
-	ret
+	VENKMAN_RET
 .weak time
 .set time, __vdso_time
 
 NON_GPROF_ENTRY(__vdso_gettimeofday)
 	movq	$LINUX_SYS_gettimeofday,%rax
+	VENKMAN_PAD(23)
 	syscall
-	ret
+	VENKMAN_RET
 .weak gettimeofday
 .set gettimeofday, __vdso_gettimeofday
 
 NON_GPROF_ENTRY(__vdso_getcpu)
 	movq	$-38,%rax	/* not implemented */
-	ret
+	VENKMAN_RET
 .weak getcpu
 .set getcpu, __vdso_getcpu
 

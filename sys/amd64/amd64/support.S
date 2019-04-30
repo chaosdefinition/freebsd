@@ -48,7 +48,7 @@ ENTRY(pagezero_std)
 	rep
 	stosq
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(pagezero_std)
 
 ENTRY(pagezero_erms)
@@ -58,7 +58,7 @@ ENTRY(pagezero_erms)
 	rep
 	stosb
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(pagezero_erms)
 
 /*
@@ -73,7 +73,7 @@ ENTRY(pagecopy)
 	rep
 	movsq
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(pagecopy)
 
 /* Address: %rdi */
@@ -88,6 +88,7 @@ ENTRY(sse2_pagezero)
 	 * cache line.
 	 */
 	.p2align 5,0x90
+	ALIGN_FOR_VENKMAN
 1:
 	movnti	%rax,(%rdi,%rdx)
 	movnti	%rax,8(%rdi,%rdx)
@@ -97,7 +98,7 @@ ENTRY(sse2_pagezero)
 	jne	1b
 	sfence
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(sse2_pagezero)
 
 /*
@@ -108,10 +109,14 @@ ENTRY(memcmp)
 	PUSH_FRAME_POINTER
 	cmpq	$16,%rdx
 	jae	5f
+
+	ALIGN_FOR_VENKMAN
 1:
 	testq	%rdx,%rdx
 	je	3f
 	xorl	%ecx,%ecx
+
+	ALIGN_FOR_VENKMAN
 2:
 	movzbl	(%rdi,%rcx,1),%eax
 	movzbl	(%rsi,%rcx,1),%r8d
@@ -141,17 +146,25 @@ ENTRY(memcmp)
 	addq	$1,%rcx
 	cmpq	%rcx,%rdx
 	jne	2b
+
+	ALIGN_FOR_VENKMAN
 3:
 	xorl	%eax,%eax
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
+	ALIGN_FOR_VENKMAN
 4:
 	subl	%r8d,%eax
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
+	ALIGN_FOR_VENKMAN
 5:
 	cmpq	$32,%rdx
 	jae	7f
+
+	ALIGN_FOR_VENKMAN
 6:
 	/*
 	 * 8 bytes
@@ -167,6 +180,8 @@ ENTRY(memcmp)
 	jae	6b
 	jl	1b
 	jmp	3b
+
+	ALIGN_FOR_VENKMAN
 7:
 	/*
 	 * 32 bytes
@@ -225,6 +240,7 @@ END(memcmp)
 	cmpq	$256,%rcx
 	ja	1256f
 
+	ALIGN_FOR_VENKMAN
 1032:
 	movq	(%rsi),%rdx
 	movq	%rdx,(%rdi)
@@ -242,7 +258,8 @@ END(memcmp)
 	cmpb	$0,%cl
 	jne	1016f
 	\end
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 1016:
 	cmpb	$16,%cl
@@ -255,6 +272,8 @@ END(memcmp)
 	jz	1000f
 	leaq	16(%rsi),%rsi
 	leaq	16(%rdi),%rdi
+
+	ALIGN_FOR_VENKMAN
 1008:
 	cmpb	$8,%cl
 	jl	1004f
@@ -264,6 +283,8 @@ END(memcmp)
 	jz	1000f
 	leaq	8(%rsi),%rsi
 	leaq	8(%rdi),%rdi
+
+	ALIGN_FOR_VENKMAN
 1004:
 	cmpb	$4,%cl
 	jl	1002f
@@ -273,6 +294,8 @@ END(memcmp)
 	jz	1000f
 	leaq	4(%rsi),%rsi
 	leaq	4(%rdi),%rdi
+
+	ALIGN_FOR_VENKMAN
 1002:
 	cmpb	$2,%cl
 	jl	1001f
@@ -282,14 +305,18 @@ END(memcmp)
 	jz	1000f
 	leaq	2(%rsi),%rsi
 	leaq	2(%rdi),%rdi
+
+	ALIGN_FOR_VENKMAN
 1001:
 	cmpb	$1,%cl
 	jl	1000f
 	movb	(%rsi),%dl
 	movb	%dl,(%rdi)
+
+	ALIGN_FOR_VENKMAN
 1000:
 	\end
-	ret
+	VENKMAN_RET
 
 	ALIGN_TEXT
 1256:
@@ -305,7 +332,7 @@ END(memcmp)
 	jne	1004b
 .endif
 	\end
-	ret
+	VENKMAN_RET
 
 .if \overlap == 1
 	/*
@@ -322,6 +349,7 @@ END(memcmp)
 	cmpq	$256,%rcx
 	ja	2256f
 
+	ALIGN_FOR_VENKMAN
 2032:
 	movq	-8(%rsi),%rdx
 	movq	%rdx,-8(%rdi)
@@ -339,7 +367,8 @@ END(memcmp)
 	cmpb	$0,%cl
 	jne	2016f
 	\end
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 2016:
 	cmpb	$16,%cl
@@ -352,6 +381,8 @@ END(memcmp)
 	jz	2000f
 	leaq	-16(%rsi),%rsi
 	leaq	-16(%rdi),%rdi
+
+	ALIGN_FOR_VENKMAN
 2008:
 	cmpb	$8,%cl
 	jl	2004f
@@ -361,6 +392,8 @@ END(memcmp)
 	jz	2000f
 	leaq	-8(%rsi),%rsi
 	leaq	-8(%rdi),%rdi
+
+	ALIGN_FOR_VENKMAN
 2004:
 	cmpb	$4,%cl
 	jl	2002f
@@ -370,6 +403,8 @@ END(memcmp)
 	jz	2000f
 	leaq	-4(%rsi),%rsi
 	leaq	-4(%rdi),%rdi
+
+	ALIGN_FOR_VENKMAN
 2002:
 	cmpb	$2,%cl
 	jl	2001f
@@ -379,14 +414,19 @@ END(memcmp)
 	jz	2000f
 	leaq	-2(%rsi),%rsi
 	leaq	-2(%rdi),%rdi
+
+	ALIGN_FOR_VENKMAN
 2001:
 	cmpb	$1,%cl
 	jl	2000f
 	movb	-1(%rsi),%dl
 	movb	%dl,-1(%rdi)
+
+	ALIGN_FOR_VENKMAN
 2000:
 	\end
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 2256:
 	decq	%rdi
@@ -400,6 +440,8 @@ END(memcmp)
 	je	3f
 	rep
 	movsb
+
+	ALIGN_FOR_VENKMAN
 3:
 	movq	%rdx,%rcx                       /* copy remainder by 32-bit words */
 	shrq	$3,%rcx
@@ -410,7 +452,7 @@ END(memcmp)
 .endif
 	cld
 	\end
-	ret
+	VENKMAN_RET
 .endif
 .endm
 
@@ -464,6 +506,7 @@ END(memcpy_erms)
 	cmpq	$256,%rcx
 	ja	1256f
 
+	ALIGN_FOR_VENKMAN
 103200:
 	movq	%r10,(%rdi)
 	movq	%r10,8(%rdi)
@@ -478,18 +521,22 @@ END(memcpy_erms)
 	movq	%r10,-16(%rdi,%rcx)
 	movq	%r10,-8(%rdi,%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 101632:
 	cmpb	$16,%cl
 	jl	100816f
+
+	ALIGN_FOR_VENKMAN
 201632:
 	movq	%r10,(%rdi)
 	movq	%r10,8(%rdi)
 	movq	%r10,-16(%rdi,%rcx)
 	movq	%r10,-8(%rdi,%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 100816:
 	cmpb	$8,%cl
@@ -497,7 +544,8 @@ END(memcpy_erms)
 	movq	%r10,(%rdi)
 	movq	%r10,-8(%rdi,%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 100408:
 	cmpb	$4,%cl
@@ -505,7 +553,8 @@ END(memcpy_erms)
 	movl	%r10d,(%rdi)
 	movl	%r10d,-4(%rdi,%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 100204:
 	cmpb	$2,%cl
@@ -513,7 +562,8 @@ END(memcpy_erms)
 	movw	%r10w,(%rdi)
 	movw	%r10w,-2(%rdi,%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 100001:
 	cmpb	$0,%cl
@@ -521,13 +571,16 @@ END(memcpy_erms)
 	movb	%r10b,(%rdi)
 100000:
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 1256:
 	movq	%rdi,%r9
 	movq	%r10,%rax
 	testl	$15,%edi
 	jnz	3f
+
+	ALIGN_FOR_VENKMAN
 1:
 .if \erms == 1
 	rep
@@ -542,12 +595,15 @@ END(memcpy_erms)
 	andl	$7,%edx
 	jnz	2f
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
+	ALIGN_FOR_VENKMAN
 2:
 	movq	%r10,-8(%rdi,%rdx)
 .endif
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 3:
 	movq	%r10,(%rdi)
@@ -578,7 +634,7 @@ ENTRY(fillw)
 	rep
 	stosw
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fillw)
 
 /*****************************************************************************/
@@ -748,7 +804,7 @@ copy_fault:
 	movq	$0,PCB_ONFAULT(%r11)
 	movl	$EFAULT,%eax
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 
 /*
  * casueword32.  Compare and set user integer.  Returns -1 on fault,
@@ -786,7 +842,7 @@ ENTRY(casueword32_nosmap)
 	 */
 	movl	%esi,(%rdx)			/* oldp = %rdx */
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(casueword32_nosmap)
 
 ENTRY(casueword32_smap)
@@ -822,7 +878,7 @@ ENTRY(casueword32_smap)
 	 */
 	movl	%esi,(%rdx)			/* oldp = %rdx */
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(casueword32_smap)
 
 /*
@@ -855,7 +911,7 @@ ENTRY(casueword_nosmap)
 	movq	%rax,PCB_ONFAULT(%r8)
 	movq	%rsi,(%rdx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(casueword_nosmap)
 
 ENTRY(casueword_smap)
@@ -885,7 +941,7 @@ ENTRY(casueword_smap)
 	movq	%rax,PCB_ONFAULT(%r8)
 	movq	%rsi,(%rdx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(casueword_smap)
 
 /*
@@ -908,7 +964,7 @@ ENTRY(fueword_nosmap)
 	movq	%rax,PCB_ONFAULT(%rcx)
 	movq	%r11,(%rsi)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fueword_nosmap)
 
 ENTRY(fueword_smap)
@@ -927,7 +983,7 @@ ENTRY(fueword_smap)
 	movq	%rax,PCB_ONFAULT(%rcx)
 	movq	%r11,(%rsi)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fueword_smap)
 
 ENTRY(fueword32_nosmap)
@@ -944,7 +1000,7 @@ ENTRY(fueword32_nosmap)
 	movq	%rax,PCB_ONFAULT(%rcx)
 	movl	%r11d,(%rsi)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fueword32_nosmap)
 
 ENTRY(fueword32_smap)
@@ -963,7 +1019,7 @@ ENTRY(fueword32_smap)
 	movq	%rax,PCB_ONFAULT(%rcx)
 	movl	%r11d,(%rsi)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fueword32_smap)
 
 ENTRY(fuword16_nosmap)
@@ -978,7 +1034,7 @@ ENTRY(fuword16_nosmap)
 	movzwl	(%rdi),%eax
 	movq	$0,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fuword16_nosmap)
 
 ENTRY(fuword16_smap)
@@ -995,7 +1051,7 @@ ENTRY(fuword16_smap)
 	clac
 	movq	$0,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fuword16_smap)
 
 ENTRY(fubyte_nosmap)
@@ -1010,7 +1066,7 @@ ENTRY(fubyte_nosmap)
 	movzbl	(%rdi),%eax
 	movq	$0,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fubyte_nosmap)
 
 ENTRY(fubyte_smap)
@@ -1027,7 +1083,7 @@ ENTRY(fubyte_smap)
 	clac
 	movq	$0,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(fubyte_smap)
 
 /*
@@ -1049,7 +1105,7 @@ ENTRY(suword_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(suword_nosmap)
 
 ENTRY(suword_smap)
@@ -1068,7 +1124,7 @@ ENTRY(suword_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(suword_smap)
 
 ENTRY(suword32_nosmap)
@@ -1085,7 +1141,7 @@ ENTRY(suword32_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(suword32_nosmap)
 
 ENTRY(suword32_smap)
@@ -1104,7 +1160,7 @@ ENTRY(suword32_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(suword32_smap)
 
 ENTRY(suword16_nosmap)
@@ -1121,7 +1177,7 @@ ENTRY(suword16_nosmap)
 	movq	PCPU(CURPCB),%rcx		/* restore trashed register */
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(suword16_nosmap)
 
 ENTRY(suword16_smap)
@@ -1140,7 +1196,7 @@ ENTRY(suword16_smap)
 	movq	PCPU(CURPCB),%rcx		/* restore trashed register */
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(suword16_smap)
 
 ENTRY(subyte_nosmap)
@@ -1158,7 +1214,7 @@ ENTRY(subyte_nosmap)
 	movq	PCPU(CURPCB),%rcx		/* restore trashed register */
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(subyte_nosmap)
 
 ENTRY(subyte_smap)
@@ -1178,7 +1234,7 @@ ENTRY(subyte_smap)
 	movq	PCPU(CURPCB),%rcx		/* restore trashed register */
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 END(subyte_smap)
 
 	ALIGN_TEXT
@@ -1189,7 +1245,7 @@ fusufault:
 	movq	%rax,PCB_ONFAULT(%rcx)
 	decq	%rax
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 
 /*
  * copyinstr(from, to, maxlen, int *lencopied)
@@ -1217,8 +1273,12 @@ fusufault:
 	/* restrict maxlen to <= VM_MAXUSER_ADDRESS-from */
 	cmpq	%rdx,%rax
 	jb	8f
+
+	ALIGN_FOR_VENKMAN
 1:
 	incq	%rdx
+
+	ALIGN_FOR_VENKMAN
 2:
 	decq	%rdx
 .if \smap == 0
@@ -1247,9 +1307,12 @@ fusufault:
 	jz	3f
 	subq	%rdx,%r8
 	movq	%r8,(%rcx)
+
+	ALIGN_FOR_VENKMAN
 3:
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
 	ALIGN_TEXT
 8:
 	movq	%rax,%rdx
@@ -1266,9 +1329,12 @@ ENTRY(copyinstr_smap)
 	COPYINSTR smap=1
 END(copyinstr_smap)
 
+	ALIGN_FOR_VENKMAN
 cpystrflt:
 	/* Fault entry clears PSL.AC */
 	movl	$EFAULT,%eax
+
+	ALIGN_FOR_VENKMAN
 cpystrflt_x:
 	/* set *lencopied and return %eax */
 	movq	$0,PCB_ONFAULT(%r9)
@@ -1277,12 +1343,17 @@ cpystrflt_x:
 	jz	1f
 	subq	%rdx,%r8
 	movq	%r8,(%rcx)
+
+	ALIGN_FOR_VENKMAN
 1:
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 
+	ALIGN_FOR_VENKMAN
 copyinstr_toolong_smap:
 	clac
+
+	ALIGN_FOR_VENKMAN
 copyinstr_toolong:
 	/* rdx is zero - return ENAMETOOLONG or EFAULT */
 	movq	$VM_MAXUSER_ADDRESS,%rax
@@ -1300,6 +1371,8 @@ ENTRY(copystr)
 	movq	%rdx,%r8			/* %r8 = maxlen */
 
 	incq    %rdx
+
+	ALIGN_FOR_VENKMAN
 1:
 	decq	%rdx
 	jz	4f
@@ -1313,15 +1386,21 @@ ENTRY(copystr)
 	/* Success -- 0 byte reached */
 	decq	%rdx
 	xorl	%eax,%eax
+
+	ALIGN_FOR_VENKMAN
 2:
 	testq	%rcx,%rcx
 	jz      3f
 	/* set *lencopied and return %rax */
 	subq	%rdx,%r8
 	movq	%r8,(%rcx)
+
+	ALIGN_FOR_VENKMAN
 3:
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
+
+	ALIGN_FOR_VENKMAN
 4:
 	/* rdx is zero -- return ENAMETOOLONG */
 	movl    $ENAMETOOLONG,%eax
@@ -1339,6 +1418,8 @@ ENTRY(lgdt)
 	/* flush the prefetch q */
 	jmp	1f
 	nop
+
+	ALIGN_FOR_VENKMAN
 1:
 	movl	$KDSEL,%eax
 	movl	%eax,%ds
@@ -1350,6 +1431,9 @@ ENTRY(lgdt)
 	/* reload code selector by turning return into intersegmental return */
 	popq	%rax
 	pushq	$KCSEL
+#ifdef VENKMAN_CFI
+	andq	$-BUNDLE_SIZE,%rax
+#endif
 	pushq	%rax
 	MEXITCOUNT
 	lretq
@@ -1370,7 +1454,7 @@ ENTRY(setjmp)
 	movq	0(%rsp),%rdx			/* get rta */
 	movq	%rdx,56(%rdi)			/* save rip */
 	xorl	%eax,%eax			/* return(0); */
-	ret
+	VENKMAN_RET
 END(setjmp)
 
 ENTRY(longjmp)
@@ -1385,7 +1469,7 @@ ENTRY(longjmp)
 	movq	%rdx,0(%rsp)			/* put in return frame */
 	xorl	%eax,%eax			/* return(1); */
 	incl	%eax
-	ret
+	VENKMAN_RET
 END(longjmp)
 
 /*
@@ -1407,7 +1491,7 @@ ENTRY(rdmsr_safe)
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%r8)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 
 /*
  * Support for writing MSRs in the safe manner.  (Instead of panic on #gp,
@@ -1427,7 +1511,7 @@ ENTRY(wrmsr_safe)
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%r8)
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 
 /*
  * MSR operations fault handler
@@ -1437,7 +1521,7 @@ msr_onfault:
 	movq	$0,PCB_ONFAULT(%r8)
 	movl	$EFAULT,%eax
 	POP_FRAME_POINTER
-	ret
+	VENKMAN_RET
 
 /*
  * void pmap_pti_pcid_invalidate(uint64_t ucr3, uint64_t kcr3);
@@ -1452,7 +1536,7 @@ ENTRY(pmap_pti_pcid_invalidate)
 	movq	%rdi,%cr3	/* to user page table */
 	movq	%rsi,%cr3	/* back to kernel */
 	popfq
-	retq
+	VENKMAN_RET
 
 /*
  * void pmap_pti_pcid_invlpg(uint64_t ucr3, uint64_t kcr3, vm_offset_t va);
@@ -1466,7 +1550,7 @@ ENTRY(pmap_pti_pcid_invlpg)
 	invlpg	(%rdx)
 	movq	%rsi,%cr3	/* back to kernel */
 	popfq
-	retq
+	VENKMAN_RET
 
 /*
  * void pmap_pti_pcid_invlrng(uint64_t ucr3, uint64_t kcr3, vm_offset_t sva,
@@ -1479,16 +1563,19 @@ ENTRY(pmap_pti_pcid_invlrng)
 	pushfq
 	cli
 	movq	%rdi,%cr3	/* to user page table */
+
+	ALIGN_FOR_VENKMAN
 1:	invlpg	(%rdx)
 	addq	$PAGE_SIZE,%rdx
 	cmpq	%rdx,%rcx
 	ja	1b
 	movq	%rsi,%cr3	/* back to kernel */
 	popfq
-	retq
+	VENKMAN_RET
 
 	.altmacro
 	.macro	ibrs_seq_label l
+	ALIGN_FOR_VENKMAN
 handle_ibrs_\l:
 	.endm
 	.macro	ibrs_call_label l
@@ -1497,6 +1584,8 @@ handle_ibrs_\l:
 	.macro	ibrs_seq count
 	ll=1
 	.rept	\count
+	ALIGN_FOR_VENKMAN
+	VENKMAN_PAD(27)
 	ibrs_call_label	%(ll)
 	nop
 	ibrs_seq_label %(ll)
@@ -1518,7 +1607,9 @@ ENTRY(handle_ibrs_entry)
 	testl	$CPUID_STDEXT_SMEP,cpu_stdext_feature(%rip)
 	jne	1f
 	ibrs_seq 32
-1:	ret
+
+	ALIGN_FOR_VENKMAN
+1:	VENKMAN_RET
 END(handle_ibrs_entry)
 
 ENTRY(handle_ibrs_exit)
@@ -1530,7 +1621,9 @@ ENTRY(handle_ibrs_exit)
 	andl	$~((IA32_SPEC_CTRL_IBRS|IA32_SPEC_CTRL_STIBP)>>32),%edx
 	wrmsr
 	movb	$0,PCPU(IBPB_SET)
-1:	ret
+
+	ALIGN_FOR_VENKMAN
+1:	VENKMAN_RET
 END(handle_ibrs_exit)
 
 /* registers-neutral version, but needs stack */
@@ -1549,7 +1642,9 @@ ENTRY(handle_ibrs_exit_rs)
 	popq	%rdx
 	popq	%rax
 	movb	$0,PCPU(IBPB_SET)
-1:	ret
+
+	ALIGN_FOR_VENKMAN
+1:	VENKMAN_RET
 END(handle_ibrs_exit_rs)
 
 	.noaltmacro
@@ -1572,6 +1667,7 @@ ENTRY(flush_l1d_sw)
 	 * done for the benefit of older CPUs which split 2M page
 	 * into 4k TLB entries.
 	 */
+	ALIGN_FOR_VENKMAN
 1:	movb	L1D_FLUSH_SIZE(%r9, %rcx), %al
 	addq	$PAGE_SIZE, %rcx
 	jne	1b
@@ -1579,10 +1675,12 @@ ENTRY(flush_l1d_sw)
 	cpuid
 	movq	$-L1D_FLUSH_SIZE, %rcx
 	/* pass 2: Read each cache line. */
+
+	ALIGN_FOR_VENKMAN
 2:	movb	L1D_FLUSH_SIZE(%r9, %rcx), %al
 	addq	$64, %rcx
 	jne	2b
 	lfence
-	ret
+	VENKMAN_RET
 #undef	L1D_FLUSH_SIZE
 END(flush_l1d_sw)
