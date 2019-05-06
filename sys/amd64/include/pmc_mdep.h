@@ -46,6 +46,13 @@ struct pmc_mdep;
 #include <dev/hwpmc/hwpmc_tsc.h>
 #include <dev/hwpmc/hwpmc_uncore.h>
 
+#include <machine/venkman.h>
+
+#ifndef STR
+#define __STR(...) #__VA_ARGS__
+#define STR(x) __STR(x)
+#endif
+
 /*
  * Intel processors implementing V2 and later of the Intel performance
  * measurement architecture have PMCs of the following classes: TSC,
@@ -121,7 +128,13 @@ union pmc_md_pmc {
 	(TF)->tf_cs = 0; (TF)->tf_rflags = 0;				\
 	__asm __volatile("movq %%rbp,%0" : "=r" ((TF)->tf_rbp));	\
 	__asm __volatile("movq %%rsp,%0" : "=r" ((TF)->tf_rsp));	\
-	__asm __volatile("call 1f \n\t1: pop %0" : "=r"((TF)->tf_rip));	\
+	__asm __volatile(STR(ALIGN_FOR_VENKMAN)"\n\t"			\
+			"nopw %cs:256(%rax, %rax, 1)\n\t"		\
+			"nopw %cs:256(%rax, %rax, 1)\n\t"		\
+			"nopl 256(%rax)\n\t"				\
+			"call 1f \n\t");				\
+	__asm __volatile(STR(ALIGN_FOR_VENKMAN)"\n\t"			\
+			"1: pop %0" : "=r"((TF)->tf_rip));		\
 	} while (0)
 
 /*

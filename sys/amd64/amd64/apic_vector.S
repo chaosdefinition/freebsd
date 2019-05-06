@@ -101,7 +101,11 @@ as_lapic_eoi:
 	addl	$(32 * \index),%eax
 	movq	%rsp, %rsi
 	movl	%eax, %edi	/* pass the IRQ */
-	VENKMAN_PAD(10)
+	VENKMAN_PAD(8)
+	/* The encoding of the add instruction above changes depending wether or not index < 4 */
+	.if \index < 4
+	VENKMAN_PAD(2)
+	.endif
 	call	lapic_handle_intr
 
 	ALIGN_FOR_VENKMAN

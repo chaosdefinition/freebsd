@@ -44,8 +44,14 @@ __FBSDID("$FreeBSD$");
 
 #include <machine/md_var.h>
 #include <machine/specialreg.h>
+#include <machine/venkman.h>
 
 #include <dev/random/randomdev.h>
+
+#ifndef STR
+#define __STR(...) #__VA_ARGS__
+#define STR(x) __STR(x)
+#endif
 
 #define	RETRY_COUNT	10
 
@@ -66,11 +72,13 @@ ivy_rng_store(u_long *buf)
 
 	retry = RETRY_COUNT;
 	__asm __volatile(
+	    STR(ALIGN_FOR_VENKMAN)"\n\t"
 	    "1:\n\t"
 	    "rdrand	%1\n\t"	/* read randomness into rndval */
 	    "jc		2f\n\t" /* CF is set on success, exit retry loop */
 	    "dec	%0\n\t" /* otherwise, retry-- */
 	    "jne	1b\n\t" /* and loop if retries are not exhausted */
+	    STR(ALIGN_FOR_VENKMAN)"\n\t"
 	    "2:"
 	    : "+r" (retry), "=r" (rndval) : : "cc");
 	*buf = rndval;

@@ -41,8 +41,14 @@
 	.globl	ia32_sigcode
 ia32_sigcode:
 #ifdef VENKMAN
-	.skip 23, 0x90
+	nopw %cs:256(%eax, %eax, 1)
+	nopw %cs:256(%eax, %eax, 1)
+#ifdef VENKMAN_CFI
+	nopl %eax
 	andl $-BUNDLE_SIZE,IA32_SIGF_HANDLER(%esp)
+#else
+	nopl 256(%eax, %eax, 1)
+#endif
 #endif
 	calll *IA32_SIGF_HANDLER(%esp)
 	leal	IA32_SIGF_UC(%esp),%eax	/* get ucontext */
@@ -50,7 +56,8 @@ ia32_sigcode:
 	movl	$SYS_sigreturn,%eax
 	pushl	%eax			/* junk to fake return addr. */
 #ifdef VENKMAN
-	.skip 19, 0x90
+	nopw %cs:256(%eax, %eax, 1)
+	nopw 256(%eax, %eax, 1)
 #endif
 	int	$0x80			/* enter kernel with args */
 					/* on stack */
@@ -63,8 +70,14 @@ ia32_sigcode:
 	ALIGN_TEXT
 freebsd4_ia32_sigcode:
 #ifdef VENKMAN
-	.skip 23, 0x90
+	nopw %cs:256(%eax, %eax, 1)
+	nopw %cs:256(%eax, %eax, 1)
+#ifdef VENKMAN_CFI
+	nopl %eax
 	andl $-BUNDLE_SIZE,IA32_SIGF_HANDLER(%esp)
+#else
+	nopl 256(%eax, %eax, 1)
+#endif
 #endif
 	calll *IA32_SIGF_HANDLER(%esp)
 	leal	IA32_SIGF_UC4(%esp),%eax/* get ucontext */
@@ -72,7 +85,8 @@ freebsd4_ia32_sigcode:
 	movl	$344,%eax		/* 4.x SYS_sigreturn */
 	pushl	%eax			/* junk to fake return addr. */
 #ifdef VENKMAN
-	.skip 19, 0x90
+	nopw %cs:256(%eax, %eax, 1)
+	nopw 256(%eax, %eax, 1)
 #endif
 	int	$0x80			/* enter kernel with args */
 					/* on stack */
@@ -86,8 +100,14 @@ freebsd4_ia32_sigcode:
 	ALIGN_TEXT
 ia32_osigcode:
 #ifdef VENKMAN
-	.skip 23, 0x90
+	nopw %cs:256(%eax, %eax, 1)
+	nopw %cs:256(%eax, %eax, 1)
+#ifdef VENKMAN_CFI
+	nopl %eax
 	andl $-BUNDLE_SIZE,IA32_SIGF_HANDLER(%esp)
+#else
+	nopl 256(%eax, %eax, 1)
+#endif
 #endif
 	calll *IA32_SIGF_HANDLER(%esp)/* call signal handler */
 	leal	IA32_SIGF_SC(%esp),%eax	/* get sigcontext */
@@ -95,7 +115,8 @@ ia32_osigcode:
 	movl	$103,%eax		/* 3.x SYS_sigreturn */
 	pushl	%eax			/* junk to fake return addr. */
 #ifdef VENKMAN
-	.skip 19, 0x90
+	nopw %cs:256(%eax, %eax, 1)
+	nopw 256(%eax, %eax, 1)
 #endif
 	int	$0x80			/* enter kernel with args */
 
@@ -119,7 +140,9 @@ ia32_osigcode:
 	ALIGN_TEXT
 lcall_tramp:
 #ifdef VENKMAN
-	.skip 30, 0x90
+	nopw %cs:256(%eax, %eax, 1)
+	nopw %cs:256(%eax, %eax, 1)
+	nopw %cs:256(%eax, %eax, 1)
 #endif
 	int	$0x80
 

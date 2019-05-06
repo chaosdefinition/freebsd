@@ -39,6 +39,8 @@
 #ifndef __MACHINE_XEN_HYPERCALL_H__
 #define __MACHINE_XEN_HYPERCALL_H__
 
+#include <machine/venkman.h>
+
 #include <sys/systm.h>
 
 #ifndef __XEN_HYPERVISOR_H__
@@ -47,14 +49,23 @@
 
 extern char *hypercall_page;
 
-#define __STR(x) #x
+#define __STR(...) #__VA_ARGS__
 #define STR(x) __STR(x)
 #define	ENOXENSYS	38
 #define CONFIG_XEN_COMPAT	0x030002
 #define __must_check
 
+#ifdef VENKMAN
+#define HYPERCALL_STR(name)					\
+	STR(ALIGN_FOR_VENKMAN)"\n\t"				\
+	"nopw %%cs:256(%%rax, %%rax, 1)\n\t"			\
+	"nopw %%cs:256(%%rax, %%rax, 1)\n\t"			\
+	"nopl 256(%%rax)\n\t"					\
+	"call hypercall_page + ("STR(__HYPERVISOR_##name)" * 32)"
+#else
 #define HYPERCALL_STR(name)					\
 	"call hypercall_page + ("STR(__HYPERVISOR_##name)" * 32)"
+#endif
 
 #define _hypercall0(type, name)			\
 ({						\
@@ -146,6 +157,17 @@ privcmd_hypercall(long op, long a1, long a2, long a3, long a4, long a5)
 	long __call = (long)&hypercall_page + (op * 32);
 
 	__asm__ volatile (
+#ifdef VENKMAN
+		STR(ALIGN_FOR_VENKMAN)"\n\t"
+		"nopw %%cs:256(%%rax, %%rax, 1)\n\t"
+		"nopw %%cs:256(%%rax, %%rax, 1)\n\t"
+#ifdef VENKMAN_CFI
+		"nopw 8(%%rax, %%rax, 1)\n\t"
+		"andq $-"STR(BUNDLE_SIZE)", %[call]\n\t"
+#else
+		"nopw %%cs:256(%%rax, %%rax, 1)\n\t"
+#endif
+#endif
 		"call *%[call]"
 		: "=a" (__res), "=D" (__ign1), "=S" (__ign2),
 		  "=d" (__ign3), "+r" (__arg4), "+r" (__arg5)

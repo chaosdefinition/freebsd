@@ -39,6 +39,7 @@ __FBSDID("$FreeBSD$");
 #include <machine/cputypes.h>
 #include <machine/md_var.h>
 #include <machine/specialreg.h>
+#include <machine/venkman.h>
 
 #include <vm/vm.h>
 
@@ -47,6 +48,11 @@ __FBSDID("$FreeBSD$");
 #include <dev/hyperv/vmbus/hyperv_machdep.h>
 #include <dev/hyperv/vmbus/hyperv_reg.h>
 #include <dev/hyperv/vmbus/hyperv_var.h>
+
+#ifndef STR
+#define __STR(...) #__VA_ARGS__
+#define STR(x) __STR(x)
+#endif
 
 struct hyperv_reftsc_ctx {
 	struct hyperv_reftsc	*tsc_ref;
@@ -85,7 +91,18 @@ hypercall_md(volatile void *hc_addr, uint64_t in_val,
 	uint64_t status;
 
 	__asm__ __volatile__ ("mov %0, %%r8" : : "r" (out_paddr): "r8");
-	__asm__ __volatile__ ("call *%3" : "=a" (status) :
+	__asm__ __volatile__ (STR(ALIGN_FOR_VENKMAN)"\n\t"
+#ifdef VENKMAN
+			"nopw %%cs:256(%%rax, %%rax, 1)\n\t"
+			"nopw %%cs:256(%%rax, %%rax, 1)\n\t"
+#ifdef VENKMAN_CFI
+			"nopl 8(%%rax)\n\t"
+			"andq $-"STR(BUNDLE_SIZE)", %3\n\t"
+#else
+			"nopw 256(%%rax, %%rax, 1)\n\t"
+#endif
+#endif
+			"call *%3" : "=a" (status) :
 	    "c" (in_val), "d" (in_paddr), "m" (hc_addr));
 	return (status);
 }

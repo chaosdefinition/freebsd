@@ -569,6 +569,8 @@ END(memcpy_erms)
 	cmpb	$0,%cl
 	je	100000f
 	movb	%r10b,(%rdi)
+
+	ALIGN_FOR_VENKMAN
 100000:
 	POP_FRAME_POINTER
 	VENKMAN_RET

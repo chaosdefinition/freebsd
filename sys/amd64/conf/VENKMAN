@@ -1,0 +1,4 @@
+include GENERIC
+
+# Sourceless kernel modules will break Venkman (since they contain unaligned branches)
+include WITHOUT_SOURCELESS_HOST

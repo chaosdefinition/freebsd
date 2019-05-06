@@ -118,4 +118,5 @@ ENTRY(efi_rt_fault)
 	jmp	efi_rt_arch_call_tail
 END(efi_rt_fault)
 
+	.rodata
 efi_rt_panic_str:	.asciz	"efi_rt_arch_call: too many args"
