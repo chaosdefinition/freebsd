@@ -143,9 +143,6 @@
 #define VENKMAN_RET_NOREG	andq	$-BUNDLE_SIZE, (%rsp);		\
 				retq
 
-#define VENKMAN_IRET		andq	$-BUNDLE_SIZE, (%rsp);		\
-				iretq
-
 #else /* !VENKMAN_CFI */
 
 #define VENKMAN_JMPr(reg)	VENKMAN_PAD(4); jmpq	*%reg
@@ -161,8 +158,6 @@
 #define VENKMAN_RETI(imm)	VENKMAN_PAD(4); ret	$imm
 
 #define VENKMAN_RET_NOREG	VENKMAN_RET
-
-#define VENKMAN_IRET		VENKMAN_PAD(6); iretq
 
 #endif /* !VENKMAN_CFI */
 
@@ -183,8 +178,6 @@
 #define VENKMAN_RETI(imm)	ret	$imm
 
 #define VENKMAN_RET_NOREG	VENKMAN_RET
-
-#define VENKMAN_IRET		iretq
 
 #endif /* !VENKMAN */
 

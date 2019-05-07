@@ -110,7 +110,7 @@ bp_push:
 	movq	32(%rsp), %rax		/* reload calling RSP */
 	movq	%rbp, (%rax)		/* store %rbp there */
 	popq	%rax			/* pop off temp */
-	VENKMAN_IRET			/* return from interrupt */
+	iretq				/* return from interrupt */
 	/*NOTREACHED*/
 
 	ALIGN_FOR_VENKMAN
@@ -131,14 +131,14 @@ bp_leave:
 	movq	%rbp, 32(%rsp)		/* store new %rsp */
 	movq	%rax, %rbp		/* set new %rbp */
 	popq	%rax			/* pop off temp */
-	VENKMAN_IRET			/* return from interrupt */
+	iretq				/* return from interrupt */
 	/*NOTREACHED*/
 
 	ALIGN_FOR_VENKMAN
 bp_nop:
 	/* We must emulate a "nop". */
 	INTR_POP
-	VENKMAN_IRET
+	iretq
 	/*NOTREACHED*/
 
 	ALIGN_FOR_VENKMAN
@@ -150,7 +150,7 @@ bp_ret:
 	movq	%rax, 8(%rsp)		/* store calling RIP */
 	addq	$8, 32(%rsp)		/* adjust new %rsp */
 	popq	%rax			/* pop off temp */
-	VENKMAN_IRET			/* return from interrupt */
+	iretq				/* return from interrupt */
 	/*NOTREACHED*/
 
 	END(dtrace_invop_start)

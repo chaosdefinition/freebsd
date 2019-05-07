@@ -918,7 +918,10 @@ nmi_calltrap:
 	movl	%cs,%eax
 	pushq	%rax		/* tf_cs */
 	pushq	$outofnmi	/* tf_rip */
-	VENKMAN_IRET
+#ifdef VENKMAN_CFI
+	andq $-BUNDLE_SIZE, (%rsp)
+#endif
+	iretq
 
 	ALIGN_FOR_VENKMAN
 outofnmi:
@@ -1334,7 +1337,7 @@ ld_regs:
 	ALIGN_FOR_VENKMAN
 	.globl	doreti_iret
 doreti_iret:
-	VENKMAN_IRET
+	iretq
 
 	ALIGN_FOR_VENKMAN
 set_segs:
