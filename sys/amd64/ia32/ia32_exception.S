@@ -54,12 +54,15 @@ int0x80_syscall_common:
 	movq	%rdi,TF_RDI(%rsp)
 	movq	PCPU(CURPCB),%rdi
 	andl	$~PCB_FULL_IRET,PCB_FLAGS(%rdi)
+	ALIGN_FOR_VENKMAN
 	SAVE_SEGS
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rdx,TF_RDX(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%rcx,TF_RCX(%rsp)
-	VENKMAN_PAD(25)
+	VENKMAN_PAD(22)
 	call	handle_ibrs_entry
+	ALIGN_FOR_VENKMAN
 	sti
 	movq	%rsi,TF_RSI(%rsp)
 	movq	%r8,TF_R8(%rsp)
@@ -67,18 +70,21 @@ int0x80_syscall_common:
 	movq	%rbx,TF_RBX(%rsp)
 	movq	%rbp,TF_RBP(%rsp)
 	movq	%r10,TF_R10(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r11,TF_R11(%rsp)
 	movq	%r12,TF_R12(%rsp)
 	movq	%r13,TF_R13(%rsp)
 	movq	%r14,TF_R14(%rsp)
 	movq	%r15,TF_R15(%rsp)
+	ALIGN_FOR_VENKMAN
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	pushfq
 	andq	$~(PSL_D | PSL_AC),(%rsp)
 	popfq
 	FAKE_MCOUNT(TF_RIP(%rsp))
 	movq	%rsp, %rdi
-	VENKMAN_PAD(11)
+	VENKMAN_PAD(3)
 	call	ia32_syscall
+	ALIGN_FOR_VENKMAN
 	MEXITCOUNT
 	jmp	doreti

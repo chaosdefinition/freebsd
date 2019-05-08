@@ -138,6 +138,7 @@ pgbuild:
 
 	/* PT3[i] = VTOP(&PT2[0]) | PG_V | PG_RW | PG_U */
 	movl	$VTOP(PT3), %ecx
+	ALIGN_FOR_VENKMAN
 	movl	$VTOP(PT2), %edx
 	orl	$(PG_V | PG_RW | PG_U), %edx
 	movl	%edx, (%ecx,%eax,ENTRY_SIZE)
@@ -150,6 +151,7 @@ pgbuild:
 	movl	%edx, (%ecx,%eax,ENTRY_SIZE)
 
 	inc	%eax
+	ALIGN_FOR_VENKMAN
 	jmp	pgbuild
 
 	ALIGN_FOR_VENKMAN
@@ -170,6 +172,7 @@ pgbuild_done:
 	movl	%eax, %cr3
 
 	/* Turn on paging (implicitly sets EFER.LMA) */
+	ALIGN_FOR_VENKMAN
 	movl	%cr0, %eax
 	orl	$CR0_PG, %eax
 	movl	%eax, %cr0

@@ -95,7 +95,11 @@ ENTRY(sse2_pagezero)
 	movnti	%rax,16(%rdi,%rdx)
 	movnti	%rax,24(%rdi,%rdx)
 	addq	$32,%rdx
-	jne	1b
+	/* jne	1b */
+	/* The Venkman patches to LLVM currently disable assembler relaxation, which is necessary
+	 * for this to remain on a single cache line */
+	.byte 0x75; .byte 1b - (. + 1)
+	ALIGN_FOR_VENKMAN
 	sfence
 	POP_FRAME_POINTER
 	VENKMAN_RET
@@ -125,6 +129,7 @@ ENTRY(memcmp)
 	addq    $1,%rcx
 	cmpq    %rcx,%rdx
 	jz	3f
+	ALIGN_FOR_VENKMAN
 	movzbl	(%rdi,%rcx,1),%eax
 	movzbl	(%rsi,%rcx,1),%r8d
 	cmpb	%r8b,%al
@@ -132,6 +137,7 @@ ENTRY(memcmp)
 	addq	$1,%rcx
 	cmpq	%rcx,%rdx
 	jz	3f
+	ALIGN_FOR_VENKMAN
 	movzbl	(%rdi,%rcx,1),%eax
 	movzbl	(%rsi,%rcx,1),%r8d
 	cmpb	%r8b,%al
@@ -139,6 +145,7 @@ ENTRY(memcmp)
 	addq	$1,%rcx
 	cmpq	%rcx,%rdx
 	jz	3f
+	ALIGN_FOR_VENKMAN
 	movzbl	(%rdi,%rcx,1),%eax
 	movzbl	(%rsi,%rcx,1),%r8d
 	cmpb	%r8b,%al
@@ -177,6 +184,7 @@ ENTRY(memcmp)
 	leaq	8(%rsi),%rsi
 	subq	$8,%rdx
 	cmpq	$8,%rdx
+	ALIGN_FOR_VENKMAN
 	jae	6b
 	jl	1b
 	jmp	3b
@@ -195,6 +203,7 @@ ENTRY(memcmp)
 
 	movq    16(%rsi),%r8
 	movq    24(%rsi),%r9
+	ALIGN_FOR_VENKMAN
 	subq    16(%rdi),%r8
 	subq    24(%rdi),%r9
 	or	%r8,%r9
@@ -203,6 +212,7 @@ ENTRY(memcmp)
 	leaq    32(%rdi),%rdi
 	leaq    32(%rsi),%rsi
 	subq    $32,%rdx
+	ALIGN_FOR_VENKMAN
 	cmpq    $32,%rdx
 	jae	7b
 	jnz	1b
@@ -226,6 +236,7 @@ END(memcmp)
  * It does not clobber rax, r10 nor r11.
  */
 .macro MEMMOVE erms overlap begin end
+	ALIGN_FOR_VENKMAN
 	\begin
 .if \overlap == 1
 	movq	%rdi,%r8
@@ -235,6 +246,7 @@ END(memcmp)
 .endif
 
 	cmpq	$32,%rcx
+	ALIGN_FOR_VENKMAN
 	jb	1016f
 
 	cmpq	$256,%rcx
@@ -250,6 +262,7 @@ END(memcmp)
 	movq	%rdx,16(%rdi)
 	movq	24(%rsi),%rdx
 	movq	%rdx,24(%rdi)
+	ALIGN_FOR_VENKMAN
 	leaq	32(%rsi),%rsi
 	leaq	32(%rdi),%rdi
 	subq	$32,%rcx
@@ -257,6 +270,7 @@ END(memcmp)
 	jae	1032b
 	cmpb	$0,%cl
 	jne	1016f
+	ALIGN_FOR_VENKMAN
 	\end
 	VENKMAN_RET
 
@@ -359,6 +373,7 @@ END(memcmp)
 	movq	%rdx,-24(%rdi)
 	movq	-32(%rsi),%rdx
 	movq	%rdx,-32(%rdi)
+	ALIGN_FOR_VENKMAN
 	leaq	-32(%rsi),%rsi
 	leaq	-32(%rdi),%rdi
 	subq	$32,%rcx
@@ -366,6 +381,7 @@ END(memcmp)
 	jae	2032b
 	cmpb	$0,%cl
 	jne	2016f
+	ALIGN_FOR_VENKMAN
 	\end
 	VENKMAN_RET
 
@@ -378,6 +394,7 @@ END(memcmp)
 	movq	-16(%rsi),%rdx
 	movq	%rdx,-16(%rdi)
 	subb	$16,%cl
+	ALIGN_FOR_VENKMAN
 	jz	2000f
 	leaq	-16(%rsi),%rsi
 	leaq	-16(%rdi),%rdi
@@ -391,6 +408,7 @@ END(memcmp)
 	subb	$8,%cl
 	jz	2000f
 	leaq	-8(%rsi),%rsi
+	ALIGN_FOR_VENKMAN
 	leaq	-8(%rdi),%rdi
 
 	ALIGN_FOR_VENKMAN
@@ -413,6 +431,7 @@ END(memcmp)
 	subb	$2,%cl
 	jz	2000f
 	leaq	-2(%rsi),%rsi
+	ALIGN_FOR_VENKMAN
 	leaq	-2(%rdi),%rdi
 
 	ALIGN_FOR_VENKMAN
@@ -501,6 +520,7 @@ END(memcpy_erms)
 	imulq	%r8,%r10
 
 	cmpq	$32,%rcx
+	ALIGN_FOR_VENKMAN
 	jbe	101632f
 
 	cmpq	$256,%rcx
@@ -515,12 +535,14 @@ END(memcpy_erms)
 	leaq	32(%rdi),%rdi
 	subq	$32,%rcx
 	cmpq	$32,%rcx
+	ALIGN_FOR_VENKMAN
 	ja	103200b
 	cmpb	$16,%cl
 	ja	201632f
 	movq	%r10,-16(%rdi,%rcx)
 	movq	%r10,-8(%rdi,%rcx)
 	POP_FRAME_POINTER
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 
 	ALIGN_TEXT
@@ -673,6 +695,7 @@ END(fillw)
 .endm
 
 .macro COPYINOUT_SMAP_END
+	ALIGN_FOR_VENKMAN
 	SMAP_ENABLE smap=1
 	COPYINOUT_END
 .endm
@@ -698,6 +721,7 @@ END(fillw)
 	 */
 	movq	%rsi,%rax
 	addq	%rdx,%rax
+	ALIGN_FOR_VENKMAN
 	jc	copy_fault
 /*
  * XXX STOP USING VM_MAXUSER_ADDRESS.
@@ -719,6 +743,7 @@ END(fillw)
 	 * Set up arguments for MEMMOVE.
 	 */
 	movq	%rdi,%r8
+	ALIGN_FOR_VENKMAN
 	movq	%rsi,%rdi
 	movq	%r8,%rsi
 	movq	%rdx,%rcx
@@ -763,6 +788,7 @@ END(copyout_smap_erms)
 	 */
 	movq	%rdi,%rax
 	addq	%rdx,%rax
+	ALIGN_FOR_VENKMAN
 	jc	copy_fault
 	movq	$VM_MAXUSER_ADDRESS,%rcx
 	cmpq	%rcx,%rax
@@ -771,6 +797,7 @@ END(copyout_smap_erms)
 	xorl	%eax,%eax
 
 	movq	%rdi,%r8
+	ALIGN_FOR_VENKMAN
 	movq	%rsi,%rdi
 	movq	%r8,%rsi
 	movq	%rdx,%rcx
@@ -818,6 +845,7 @@ ENTRY(casueword32_nosmap)
 	movq	PCPU(CURPCB),%r8
 	movq	$fusufault,PCB_ONFAULT(%r8)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rdi			/* verify address is valid */
 	ja	fusufault
@@ -836,6 +864,7 @@ ENTRY(casueword32_nosmap)
 	 */
 	movl	%eax,%esi
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	%rax,PCB_ONFAULT(%r8)
 
 	/*
@@ -852,6 +881,7 @@ ENTRY(casueword32_smap)
 	movq	PCPU(CURPCB),%r8
 	movq	$fusufault,PCB_ONFAULT(%r8)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rdi			/* verify address is valid */
 	ja	fusufault
@@ -870,6 +900,7 @@ ENTRY(casueword32_smap)
 	 * be the current value.  Save %eax into %esi to prepare the return
 	 * value.
 	 */
+	ALIGN_FOR_VENKMAN
 	movl	%eax,%esi
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
@@ -893,6 +924,7 @@ ENTRY(casueword_nosmap)
 	movq	PCPU(CURPCB),%r8
 	movq	$fusufault,PCB_ONFAULT(%r8)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rdi			/* verify address is valid */
 	ja	fusufault
@@ -910,6 +942,7 @@ ENTRY(casueword_nosmap)
 	 */
 	movq	%rax,%rsi
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	%rax,PCB_ONFAULT(%r8)
 	movq	%rsi,(%rdx)
 	POP_FRAME_POINTER
@@ -921,6 +954,7 @@ ENTRY(casueword_smap)
 	movq	PCPU(CURPCB),%r8
 	movq	$fusufault,PCB_ONFAULT(%r8)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rdi			/* verify address is valid */
 	ja	fusufault
@@ -931,6 +965,7 @@ ENTRY(casueword_smap)
 	lock
 #endif
 	cmpxchgq %rcx,(%rdi)			/* new = %rcx */
+	ALIGN_FOR_VENKMAN
 	clac
 
 	/*
@@ -957,6 +992,7 @@ ENTRY(fueword_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-8,%rax
 	cmpq	%rax,%rdi			/* verify address is valid */
 	ja	fusufault
@@ -964,6 +1000,7 @@ ENTRY(fueword_nosmap)
 	xorl	%eax,%eax
 	movq	(%rdi),%r11
 	movq	%rax,PCB_ONFAULT(%rcx)
+	ALIGN_FOR_VENKMAN
 	movq	%r11,(%rsi)
 	POP_FRAME_POINTER
 	VENKMAN_RET
@@ -974,6 +1011,7 @@ ENTRY(fueword_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-8,%rax
 	cmpq	%rax,%rdi			/* verify address is valid */
 	ja	fusufault
@@ -982,6 +1020,7 @@ ENTRY(fueword_smap)
 	stac
 	movq	(%rdi),%r11
 	clac
+	ALIGN_FOR_VENKMAN
 	movq	%rax,PCB_ONFAULT(%rcx)
 	movq	%r11,(%rsi)
 	POP_FRAME_POINTER
@@ -993,6 +1032,7 @@ ENTRY(fueword32_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rdi			/* verify address is valid */
 	ja	fusufault
@@ -1000,6 +1040,7 @@ ENTRY(fueword32_nosmap)
 	xorl	%eax,%eax
 	movl	(%rdi),%r11d
 	movq	%rax,PCB_ONFAULT(%rcx)
+	ALIGN_FOR_VENKMAN
 	movl	%r11d,(%rsi)
 	POP_FRAME_POINTER
 	VENKMAN_RET
@@ -1010,6 +1051,7 @@ ENTRY(fueword32_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rdi			/* verify address is valid */
 	ja	fusufault
@@ -1018,6 +1060,7 @@ ENTRY(fueword32_smap)
 	stac
 	movl	(%rdi),%r11d
 	clac
+	ALIGN_FOR_VENKMAN
 	movq	%rax,PCB_ONFAULT(%rcx)
 	movl	%r11d,(%rsi)
 	POP_FRAME_POINTER
@@ -1029,11 +1072,13 @@ ENTRY(fuword16_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-2,%rax
 	cmpq	%rax,%rdi
 	ja	fusufault
 
 	movzwl	(%rdi),%eax
+	ALIGN_FOR_VENKMAN
 	movq	$0,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
 	VENKMAN_RET
@@ -1044,6 +1089,7 @@ ENTRY(fuword16_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-2,%rax
 	cmpq	%rax,%rdi
 	ja	fusufault
@@ -1051,6 +1097,7 @@ ENTRY(fuword16_smap)
 	stac
 	movzwl	(%rdi),%eax
 	clac
+	ALIGN_FOR_VENKMAN
 	movq	$0,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
 	VENKMAN_RET
@@ -1061,11 +1108,13 @@ ENTRY(fubyte_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-1,%rax
 	cmpq	%rax,%rdi
 	ja	fusufault
 
 	movzbl	(%rdi),%eax
+	ALIGN_FOR_VENKMAN
 	movq	$0,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
 	VENKMAN_RET
@@ -1076,6 +1125,7 @@ ENTRY(fubyte_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-1,%rax
 	cmpq	%rax,%rdi
 	ja	fusufault
@@ -1083,6 +1133,7 @@ ENTRY(fubyte_smap)
 	stac
 	movzbl	(%rdi),%eax
 	clac
+	ALIGN_FOR_VENKMAN
 	movq	$0,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
 	VENKMAN_RET
@@ -1098,12 +1149,14 @@ ENTRY(suword_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-8,%rax
 	cmpq	%rax,%rdi			/* verify address validity */
 	ja	fusufault
 
 	movq	%rsi,(%rdi)
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rcx
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
@@ -1115,6 +1168,7 @@ ENTRY(suword_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-8,%rax
 	cmpq	%rax,%rdi			/* verify address validity */
 	ja	fusufault
@@ -1123,6 +1177,7 @@ ENTRY(suword_smap)
 	movq	%rsi,(%rdi)
 	clac
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rcx
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
@@ -1134,12 +1189,14 @@ ENTRY(suword32_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rdi			/* verify address validity */
 	ja	fusufault
 
 	movl	%esi,(%rdi)
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rcx
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
@@ -1151,6 +1208,7 @@ ENTRY(suword32_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
 	cmpq	%rax,%rdi			/* verify address validity */
 	ja	fusufault
@@ -1159,6 +1217,7 @@ ENTRY(suword32_smap)
 	movl	%esi,(%rdi)
 	clac
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rcx
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
@@ -1170,12 +1229,14 @@ ENTRY(suword16_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-2,%rax
 	cmpq	%rax,%rdi			/* verify address validity */
 	ja	fusufault
 
 	movw	%si,(%rdi)
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rcx		/* restore trashed register */
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
@@ -1187,6 +1248,7 @@ ENTRY(suword16_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-2,%rax
 	cmpq	%rax,%rdi			/* verify address validity */
 	ja	fusufault
@@ -1195,6 +1257,7 @@ ENTRY(suword16_smap)
 	movw	%si,(%rdi)
 	clac
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rcx		/* restore trashed register */
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
@@ -1206,6 +1269,7 @@ ENTRY(subyte_nosmap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-1,%rax
 	cmpq	%rax,%rdi			/* verify address validity */
 	ja	fusufault
@@ -1213,6 +1277,7 @@ ENTRY(subyte_nosmap)
 	movl	%esi,%eax
 	movb	%al,(%rdi)
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rcx		/* restore trashed register */
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
@@ -1224,6 +1289,7 @@ ENTRY(subyte_smap)
 	movq	PCPU(CURPCB),%rcx
 	movq	$fusufault,PCB_ONFAULT(%rcx)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS-1,%rax
 	cmpq	%rax,%rdi			/* verify address validity */
 	ja	fusufault
@@ -1233,6 +1299,7 @@ ENTRY(subyte_smap)
 	movb	%al,(%rdi)
 	clac
 	xorl	%eax,%eax
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rcx		/* restore trashed register */
 	movq	%rax,PCB_ONFAULT(%rcx)
 	POP_FRAME_POINTER
@@ -1264,6 +1331,7 @@ fusufault:
 	movq	PCPU(CURPCB),%r9
 	movq	$cpystrflt,PCB_ONFAULT(%r9)
 
+	ALIGN_FOR_VENKMAN
 	movq	$VM_MAXUSER_ADDRESS,%rax
 
 	/* make sure 'from' is within bounds */
@@ -1299,6 +1367,7 @@ fusufault:
 	SMAP_ENABLE \smap
 
 	/* Success -- 0 byte reached */
+	ALIGN_FOR_VENKMAN
 	decq	%rdx
 	xorl	%eax,%eax
 
@@ -1454,6 +1523,7 @@ ENTRY(setjmp)
 	movq	%r14,40(%rdi)			/* save r14 */
 	movq	%r15,48(%rdi)			/* save r15 */
 	movq	0(%rsp),%rdx			/* get rta */
+	ALIGN_FOR_VENKMAN
 	movq	%rdx,56(%rdi)			/* save rip */
 	xorl	%eax,%eax			/* return(0); */
 	VENKMAN_RET
@@ -1468,6 +1538,7 @@ ENTRY(longjmp)
 	movq	40(%rdi),%r14			/* restore r14 */
 	movq	48(%rdi),%r15			/* restore r15 */
 	movq	56(%rdi),%rdx			/* get rta */
+	ALIGN_FOR_VENKMAN
 	movq	%rdx,0(%rsp)			/* put in return frame */
 	xorl	%eax,%eax			/* return(1); */
 	incl	%eax
@@ -1605,6 +1676,7 @@ ENTRY(handle_ibrs_entry)
 	orl	$(IA32_SPEC_CTRL_IBRS|IA32_SPEC_CTRL_STIBP),%eax
 	orl	$(IA32_SPEC_CTRL_IBRS|IA32_SPEC_CTRL_STIBP)>>32,%edx
 	wrmsr
+	ALIGN_FOR_VENKMAN
 	movb	$1,PCPU(IBPB_SET)
 	testl	$CPUID_STDEXT_SMEP,cpu_stdext_feature(%rip)
 	jne	1f
@@ -1622,6 +1694,7 @@ ENTRY(handle_ibrs_exit)
 	andl	$~(IA32_SPEC_CTRL_IBRS|IA32_SPEC_CTRL_STIBP),%eax
 	andl	$~((IA32_SPEC_CTRL_IBRS|IA32_SPEC_CTRL_STIBP)>>32),%edx
 	wrmsr
+	ALIGN_FOR_VENKMAN
 	movb	$0,PCPU(IBPB_SET)
 
 	ALIGN_FOR_VENKMAN
@@ -1639,6 +1712,7 @@ ENTRY(handle_ibrs_exit_rs)
 	rdmsr
 	andl	$~(IA32_SPEC_CTRL_IBRS|IA32_SPEC_CTRL_STIBP),%eax
 	andl	$~((IA32_SPEC_CTRL_IBRS|IA32_SPEC_CTRL_STIBP)>>32),%edx
+	ALIGN_FOR_VENKMAN
 	wrmsr
 	popq	%rcx
 	popq	%rdx

@@ -75,8 +75,10 @@ NON_GPROF_ENTRY(btext)
 	/* Get onto a stack that we can trust - there is no going back now. */
 	movq	$bootstack,%rsp
 	xorl	%ebp, %ebp
-	VENKMAN_PAD(28)
+	ALIGN_FOR_VENKMAN
+	VENKMAN_PAD(27)
 	call	hammer_time		/* set up cpu for unix operation */
+	ALIGN_FOR_VENKMAN
 	movq	%rax,%rsp		/* set up kstack for mi_startup() */
 	VENKMAN_PAD(24)
 	call	mi_startup		/* autoconfiguration, mountroot etc */

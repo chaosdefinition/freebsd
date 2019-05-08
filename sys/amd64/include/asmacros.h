@@ -179,6 +179,9 @@
 	.macro	MOVE_STACKS qw
 	.L.offset=0
 	.rept	\qw
+	.if .L.offset % 24 == 0
+	ALIGN_FOR_VENKMAN
+	.endif
 	movq	.L.offset(%rsp),%rdx
 	movq	%rdx,.L.offset(%rax)
 	.L.offset=.L.offset+8
@@ -186,6 +189,7 @@
 	.endm
 
 	.macro	PTI_UUENTRY has_err
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(KCR3),%rax
 	movq	%rax,%cr3
 	movq	PCPU(RSP0),%rax
@@ -248,26 +252,31 @@ X\vec_name:
 	movq	%rdx,TF_RDX(%rsp)
 	movq	%rcx,TF_RCX(%rsp)
 	movq	%r8,TF_R8(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r9,TF_R9(%rsp)
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rbx,TF_RBX(%rsp)
 	movq	%rbp,TF_RBP(%rsp)
 	movq	%r10,TF_R10(%rsp)
 	movq	%r11,TF_R11(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r12,TF_R12(%rsp)
 	movq	%r13,TF_R13(%rsp)
 	movq	%r14,TF_R14(%rsp)
 	movq	%r15,TF_R15(%rsp)
+	ALIGN_FOR_VENKMAN
 	SAVE_SEGS
+	ALIGN_FOR_VENKMAN
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	pushfq
 	andq	$~(PSL_D|PSL_AC),(%rsp)
 	popfq
 	testb	$SEL_RPL_MASK,TF_CS(%rsp)  /* come from kernel ? */
+	ALIGN_FOR_VENKMAN
 	jz	1f		/* yes, leave PCB_FULL_IRET alone */
 	movq	PCPU(CURPCB),%r8
 	andl	$~PCB_FULL_IRET,PCB_FLAGS(%r8)
-	VENKMAN_PAD(0)
+	VENKMAN_PAD(4)
 	call	handle_ibrs_entry
 
 	ALIGN_FOR_VENKMAN
@@ -281,18 +290,21 @@ X\vec_name:
 	.endm
 
 	.macro	RESTORE_REGS
+	ALIGN_FOR_VENKMAN
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_RDX(%rsp),%rdx
 	movq	TF_RCX(%rsp),%rcx
 	movq	TF_R8(%rsp),%r8
 	movq	TF_R9(%rsp),%r9
+	ALIGN_FOR_VENKMAN
 	movq	TF_RAX(%rsp),%rax
 	movq	TF_RBX(%rsp),%rbx
 	movq	TF_RBP(%rsp),%rbp
 	movq	TF_R10(%rsp),%r10
 	movq	TF_R11(%rsp),%r11
 	movq	TF_R12(%rsp),%r12
+	ALIGN_FOR_VENKMAN
 	movq	TF_R13(%rsp),%r13
 	movq	TF_R14(%rsp),%r14
 	movq	TF_R15(%rsp),%r15

@@ -47,12 +47,14 @@ ENTRY(efi_rt_arch_call)
 	movq	%r13, EC_R13(%rdi)
 	movq	%r14, EC_R14(%rdi)
 	movq	%r15, EC_R15(%rdi)
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURTHREAD), %rax
 	movq	%rdi, TD_MD+MD_EFIRT_TMP(%rax)
 	movq	PCPU(CURPCB), %rsi
 
 	movl	EC_ARGCNT(%rdi), %ecx
 	movl	%ecx, %ebx
+	ALIGN_FOR_VENKMAN
 	movl	$4, %eax
 	cmpl	%eax, %ecx
 	cmovbl	%eax, %ecx
@@ -63,6 +65,7 @@ ENTRY(efi_rt_arch_call)
 	jz	1f
 	movq	EC_ARG1(%rdi), %rcx
 	decl	%ebx
+	ALIGN_FOR_VENKMAN
 	jz	1f
 	movq	EC_ARG2(%rdi), %rdx
 	decl	%ebx
@@ -70,6 +73,7 @@ ENTRY(efi_rt_arch_call)
 	movq	EC_ARG3(%rdi), %r8
 	decl	%ebx
 	jz	1f
+	ALIGN_FOR_VENKMAN
 	movq	EC_ARG4(%rdi), %r9
 	decl	%ebx
 	jz	1f
@@ -77,8 +81,9 @@ ENTRY(efi_rt_arch_call)
 	movq	%rax, 4*8(%rsp)
 	decl	%ebx
 	jz	1f
+	ALIGN_FOR_VENKMAN
 	movq	$efi_rt_panic_str, %rdi
-	VENKMAN_PAD(28)
+	VENKMAN_PAD(20)
 	call	panic
 
 	ALIGN_FOR_VENKMAN
@@ -87,11 +92,13 @@ ENTRY(efi_rt_arch_call)
 	VENKMAN_PAD(11)
 	VENKMAN_CALLr(rax)
 
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURTHREAD), %rbx
 	movq	TD_MD+MD_EFIRT_TMP(%rbx), %rdi
 	movq	%rax, EC_EFI_STATUS(%rdi)
 	movq	PCPU(CURPCB), %rsi
 	xorl	%eax, %eax
+	ALIGN_FOR_VENKMAN
 	movq	%rax, PCB_ONFAULT(%rsi)
 
 	ALIGN_FOR_VENKMAN
@@ -105,6 +112,7 @@ efi_rt_arch_call_tail:
 	movq	EC_RBX(%rdi), %rbx
 
 	popq	%rbp
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 END(efi_rt_arch_call)
 

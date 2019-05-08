@@ -112,6 +112,7 @@ MCOUNT_LABEL(btrap)
 X\l:	subq $TF_RIP,%rsp
 	movl $\trapno,TF_TRAPNO(%rsp)
 	movq $0,TF_ADDR(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq $0,TF_ERR(%rsp)
 	jmp alltraps_noen
 	.endm
@@ -131,6 +132,7 @@ X\l:
 	subq $TF_RIP,%rsp
 	movl $\trapno,TF_TRAPNO(%rsp)
 	movq $0,TF_ADDR(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq $0,TF_ERR(%rsp)
 	jmp alltraps
 	.endm
@@ -175,6 +177,7 @@ alltraps:
 	jz	1f		/* already running with kernel GS.base */
 	swapgs
 	movq	PCPU(CURPCB),%rdi
+	ALIGN_FOR_VENKMAN
 	andl	$~PCB_FULL_IRET,PCB_FLAGS(%rdi)
 
 	ALIGN_FOR_VENKMAN
@@ -200,11 +203,13 @@ alltraps_pushregs_no_rax:
 	movq	%rbx,TF_RBX(%rsp)
 	movq	%rbp,TF_RBP(%rsp)
 	movq	%r10,TF_R10(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r11,TF_R11(%rsp)
 	movq	%r12,TF_R12(%rsp)
 	movq	%r13,TF_R13(%rsp)
 	movq	%r14,TF_R14(%rsp)
 	movq	%r15,TF_R15(%rsp)
+	ALIGN_FOR_VENKMAN
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	pushfq
 	andq	$~(PSL_D | PSL_AC),(%rsp)
@@ -218,6 +223,7 @@ alltraps_pushregs_no_rax:
 	 * the usual way.
 	 */
 	testb	$SEL_RPL_MASK,TF_CS(%rsp) /* Did we come from kernel? */
+	ALIGN_FOR_VENKMAN
 	jnz	calltrap		/* ignore userland traps */
 	cmpl	$T_BPTFLT,TF_TRAPNO(%rsp)
 	jne	calltrap
@@ -233,6 +239,7 @@ alltraps_pushregs_no_rax:
 	movq	$calltrap,dtrace_invop_calltrap_addr(%rip)
 
 	/* Jump to the code hooked in by DTrace. */
+	ALIGN_FOR_VENKMAN
 	VENKMAN_JMPm(dtrace_invop_jump_addr)
 #endif
 	ALIGN_FOR_VENKMAN
@@ -259,6 +266,7 @@ alltraps_noen:
 	jz	1f /* already running with kernel GS.base */
 	swapgs
 	movq	PCPU(CURPCB),%rdi
+	ALIGN_FOR_VENKMAN
 	andl	$~PCB_FULL_IRET,PCB_FLAGS(%rdi)
 
 	ALIGN_FOR_VENKMAN
@@ -276,28 +284,34 @@ IDTVEC(dblfault)
 	subq	$TF_ERR,%rsp
 	movl	$T_DOUBLEFLT,TF_TRAPNO(%rsp)
 	movq	$0,TF_ADDR(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	$0,TF_ERR(%rsp)
 	movq	%rdi,TF_RDI(%rsp)
 	movq	%rsi,TF_RSI(%rsp)
 	movq	%rdx,TF_RDX(%rsp)
 	movq	%rcx,TF_RCX(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r8,TF_R8(%rsp)
 	movq	%r9,TF_R9(%rsp)
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rbx,TF_RBX(%rsp)
 	movq	%rbp,TF_RBP(%rsp)
 	movq	%r10,TF_R10(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r11,TF_R11(%rsp)
 	movq	%r12,TF_R12(%rsp)
 	movq	%r13,TF_R13(%rsp)
 	movq	%r14,TF_R14(%rsp)
 	movq	%r15,TF_R15(%rsp)
+	ALIGN_FOR_VENKMAN
 	SAVE_SEGS
+	ALIGN_FOR_VENKMAN
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	pushfq
 	andq	$~(PSL_D | PSL_AC),(%rsp)
 	popfq
 	testb	$SEL_RPL_MASK,TF_CS(%rsp) /* Did we come from kernel? */
+	ALIGN_FOR_VENKMAN
 	jz	1f			/* already running with kernel GS.base */
 	swapgs
 
@@ -325,6 +339,7 @@ IDTVEC(page_pti)
 	pushq	%rax
 	movq	%cr3,%rax
 	movq	%rax,PCPU(SAVED_UCR3)
+	ALIGN_FOR_VENKMAN
 	cmpq	$~0,PCPU(UCR3)
 	jne	1f
 	popq	%rax
@@ -347,6 +362,7 @@ IDTVEC(page)
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rdx,TF_RDX(%rsp)
 	movq	%rcx,TF_RCX(%rsp)
+	ALIGN_FOR_VENKMAN
 	testb	$SEL_RPL_MASK,TF_CS(%rsp) /* Did we come from kernel? */
 	jz	page_cr2		/* already running with kernel GS.base */
 	swapgs
@@ -363,8 +379,10 @@ page_u:	movq	PCPU(CURPCB),%rdi
 page_cr2:
 	movq	%cr2,%rdi		/* preserve %cr2 before ..  */
 	movq	%rdi,TF_ADDR(%rsp)	/* enabling interrupts. */
+	ALIGN_FOR_VENKMAN
 	SAVE_SEGS
 	movl	$T_PAGEFLT,TF_TRAPNO(%rsp)
+	ALIGN_FOR_VENKMAN
 	testl	$PSL_I,TF_RFLAGS(%rsp)
 	jz	alltraps_pushregs_no_rax
 	sti
@@ -392,6 +410,7 @@ page_cr2:
 	pushq	%rax
 	pushq	%rdx
 	movq	PCPU(KCR3),%rax
+	ALIGN_FOR_VENKMAN
 	movq	%rax,%cr3
 	movq	PCPU(RSP0),%rax
 	subq	$2*PTI_SIZE-3*8,%rax /* no err, %rax, %rdx in faulted frame */
@@ -412,6 +431,7 @@ IDTVEC(\name\()_pti)
 	je	\name\()_pti_doreti
 	testb	$SEL_RPL_MASK,PTI_CS-2*8(%rsp) /* %rax, %rdx not yet pushed */
 	jz	X\name
+	ALIGN_FOR_VENKMAN
 	PTI_UENTRY has_err=1
 	swapgs
 IDTVEC(\name)
@@ -431,15 +451,18 @@ prot_addrf:
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rdx,TF_RDX(%rsp)
 	movq	%rcx,TF_RCX(%rsp)
+	ALIGN_FOR_VENKMAN
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
 	leaq	doreti_iret(%rip),%rdi
 	cmpq	%rdi,TF_RIP(%rsp)
 	je	5f			/* kernel but with user gsbase!! */
+	ALIGN_FOR_VENKMAN
 	testb	$SEL_RPL_MASK,TF_CS(%rsp) /* Did we come from kernel? */
 	jz	6f			/* already running with kernel GS.base */
 	testb	$CPUID_STDEXT_FSGSBASE,cpu_stdext_feature(%rip)
 	jz	2f
+	ALIGN_FOR_VENKMAN
 	cmpw	$KUF32SEL,TF_FS(%rsp)
 	jne	1f
 	rdfsbase %rax
@@ -455,6 +478,7 @@ prot_addrf:
 	testb	$CPUID_STDEXT_FSGSBASE,cpu_stdext_feature(%rip)
 	jz	4f
 	cmpw	$KUF32SEL,TF_FS(%rsp)
+	ALIGN_FOR_VENKMAN
 	jne	3f
 	movq	%rax,PCB_FSBASE(%rdi)
 
@@ -470,6 +494,7 @@ prot_addrf:
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
 	testl	$PSL_I,TF_RFLAGS(%rsp)
+	ALIGN_FOR_VENKMAN
 	jz	alltraps_pushregs_no_rax
 	sti
 	jmp	alltraps_pushregs_no_rax
@@ -496,6 +521,7 @@ IDTVEC(fast_syscall_pti)
 	movq	%rax,PCPU(SCRATCH_RAX)
 	cmpq	$~0,PCPU(UCR3)
 	je	fast_syscall_common
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(KCR3),%rax
 	movq	%rax,%cr3
 	jmp	fast_syscall_common
@@ -511,9 +537,11 @@ fast_syscall_common:
 	/* Now emulate a trapframe. Make the 8 byte alignment odd for call. */
 	subq	$TF_SIZE,%rsp
 	/* defer TF_RSP till we have a spare register */
+	ALIGN_FOR_VENKMAN
 	movq	%r11,TF_RFLAGS(%rsp)
 	movq	%rcx,TF_RIP(%rsp)	/* %rcx original value is in %r10 */
 	movq	PCPU(SCRATCH_RSP),%r11	/* %r11 already saved */
+	ALIGN_FOR_VENKMAN
 	movq	%r11,TF_RSP(%rsp)	/* user stack pointer */
 	movq	PCPU(SCRATCH_RAX),%rax
 	/*
@@ -526,32 +554,39 @@ fast_syscall_common:
 	movq	%rax,TF_RAX(%rsp)	/* syscall number */
 	movq	%rdx,TF_RDX(%rsp)	/* arg 3 */
 	movq	%r10,TF_RCX(%rsp)	/* arg 4 */
+	ALIGN_FOR_VENKMAN
 	SAVE_SEGS
-	VENKMAN_PAD(19)
+	VENKMAN_PAD(5)
 	call	handle_ibrs_entry
 	movq	PCPU(CURPCB),%r11
+	ALIGN_FOR_VENKMAN
 	andl	$~PCB_FULL_IRET,PCB_FLAGS(%r11)
 	sti
 	movq	$KUDSEL,TF_SS(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	$KUCSEL,TF_CS(%rsp)
 	movq	$2,TF_ERR(%rsp)
 	movq	%rdi,TF_RDI(%rsp)	/* arg 1 */
+	ALIGN_FOR_VENKMAN
 	movq	%rsi,TF_RSI(%rsp)	/* arg 2 */
 	movq	%r8,TF_R8(%rsp)		/* arg 5 */
 	movq	%r9,TF_R9(%rsp)		/* arg 6 */
 	movq	%rbx,TF_RBX(%rsp)	/* C preserved */
 	movq	%rbp,TF_RBP(%rsp)	/* C preserved */
 	movq	%r12,TF_R12(%rsp)	/* C preserved */
+	ALIGN_FOR_VENKMAN
 	movq	%r13,TF_R13(%rsp)	/* C preserved */
 	movq	%r14,TF_R14(%rsp)	/* C preserved */
 	movq	%r15,TF_R15(%rsp)	/* C preserved */
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	FAKE_MCOUNT(TF_RIP(%rsp))
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURTHREAD),%rdi
 	movq	%rsp,TD_FRAME(%rdi)
 	movl	TF_RFLAGS(%rsp),%esi
 	andl	$PSL_T,%esi
-	VENKMAN_PAD(12)
+	ALIGN_FOR_VENKMAN
+	VENKMAN_PAD(27)
 	call	amd64_syscall
 
 	ALIGN_FOR_VENKMAN
@@ -561,22 +596,26 @@ fast_syscall_common:
 	testl	$PCB_FULL_IRET,PCB_FLAGS(%rax)
 	jnz	4f
 	/* Check for and handle AST's on return to userland. */
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURTHREAD),%rax
 	testl	$TDF_ASTPENDING | TDF_NEEDRESCHED,TD_FLAGS(%rax)
 	jne	3f
-	VENKMAN_PAD(8)
+	VENKMAN_PAD(2)
 	call	handle_ibrs_exit
 	/* Restore preserved registers. */
+	ALIGN_FOR_VENKMAN
 	MEXITCOUNT
 	movq	TF_RDI(%rsp),%rdi	/* bonus; preserve arg 1 */
 	movq	TF_RSI(%rsp),%rsi	/* bonus: preserve arg 2 */
 	movq	TF_RDX(%rsp),%rdx	/* return value 2 */
 	movq	TF_RAX(%rsp),%rax	/* return value 1 */
 	movq	TF_RFLAGS(%rsp),%r11	/* original %rflags */
+	ALIGN_FOR_VENKMAN
 	movq	TF_RIP(%rsp),%rcx	/* original %rip */
 	movq	TF_RSP(%rsp),%rsp	/* user stack pointer */
 	cmpq	$~0,PCPU(UCR3)
 	je	2f
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(UCR3),%r9
 	movq	%r9,%cr3
 	xorl	%r9d,%r9d
@@ -622,28 +661,34 @@ IDTVEC(dbg)
 	subq	$TF_RIP,%rsp
 	movl	$(T_TRCTRAP),TF_TRAPNO(%rsp)
 	movq	$0,TF_ADDR(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	$0,TF_ERR(%rsp)
 	movq	%rdi,TF_RDI(%rsp)
 	movq	%rsi,TF_RSI(%rsp)
 	movq	%rdx,TF_RDX(%rsp)
 	movq	%rcx,TF_RCX(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r8,TF_R8(%rsp)
 	movq	%r9,TF_R9(%rsp)
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rbx,TF_RBX(%rsp)
 	movq	%rbp,TF_RBP(%rsp)
 	movq	%r10,TF_R10(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r11,TF_R11(%rsp)
 	movq	%r12,TF_R12(%rsp)
 	movq	%r13,TF_R13(%rsp)
 	movq	%r14,TF_R14(%rsp)
 	movq	%r15,TF_R15(%rsp)
+	ALIGN_FOR_VENKMAN
 	SAVE_SEGS
+	ALIGN_FOR_VENKMAN
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	pushfq
 	andq	$~(PSL_D | PSL_AC),(%rsp)
 	popfq
 	testb	$SEL_RPL_MASK,TF_CS(%rsp)
+	ALIGN_FOR_VENKMAN
 	jnz	dbg_fromuserspace
 	/*
 	 * We've interrupted the kernel.  Preserve GS.base in %r12,
@@ -656,6 +701,7 @@ IDTVEC(dbg)
 	orq	%rdx,%r12
 	/* Retrieve and load the canonical value for GS.base. */
 	movq	TF_SIZE(%rsp),%rdx
+	ALIGN_FOR_VENKMAN
 	movl	%edx,%eax
 	shrq	$32,%rdx
 	wrmsr
@@ -663,6 +709,7 @@ IDTVEC(dbg)
 	movq	PCPU(KCR3),%rax
 	cmpq	$~0,%rax
 	je	1f
+	ALIGN_FOR_VENKMAN
 	movq	%rax,%cr3
 
 	ALIGN_FOR_VENKMAN
@@ -679,6 +726,7 @@ IDTVEC(dbg)
 	movq	%rsp,%rdi
 	VENKMAN_PAD(24)
 	call	trap
+	ALIGN_FOR_VENKMAN
 	MEXITCOUNT
 	testl	$CPUID_STDEXT3_IBPB,cpu_stdext_feature3(%rip)
 	je	3f
@@ -723,12 +771,15 @@ dbg_fromuserspace:
 	movq	%rsp,%rsi
 	rep;movsb
 	movq	%rax,%rsp
-	VENKMAN_PAD(31)
+	ALIGN_FOR_VENKMAN
+	VENKMAN_PAD(27)
 	call	handle_ibrs_entry
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rdi
 	orl	$PCB_FULL_IRET,PCB_FLAGS(%rdi)
 	testb	$CPUID_STDEXT_FSGSBASE,cpu_stdext_feature(%rip)
 	jz	3f
+	ALIGN_FOR_VENKMAN
 	cmpw	$KUF32SEL,TF_FS(%rsp)
 	jne	2f
 	rdfsbase %rax
@@ -774,29 +825,35 @@ IDTVEC(nmi)
 	subq	$TF_RIP,%rsp
 	movl	$(T_NMI),TF_TRAPNO(%rsp)
 	movq	$0,TF_ADDR(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	$0,TF_ERR(%rsp)
 	movq	%rdi,TF_RDI(%rsp)
 	movq	%rsi,TF_RSI(%rsp)
 	movq	%rdx,TF_RDX(%rsp)
 	movq	%rcx,TF_RCX(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r8,TF_R8(%rsp)
 	movq	%r9,TF_R9(%rsp)
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rbx,TF_RBX(%rsp)
 	movq	%rbp,TF_RBP(%rsp)
 	movq	%r10,TF_R10(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r11,TF_R11(%rsp)
 	movq	%r12,TF_R12(%rsp)
 	movq	%r13,TF_R13(%rsp)
 	movq	%r14,TF_R14(%rsp)
 	movq	%r15,TF_R15(%rsp)
+	ALIGN_FOR_VENKMAN
 	SAVE_SEGS
+	ALIGN_FOR_VENKMAN
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	pushfq
 	andq	$~(PSL_D | PSL_AC),(%rsp)
 	popfq
 	xorl	%ebx,%ebx
 	testb	$SEL_RPL_MASK,TF_CS(%rsp)
+	ALIGN_FOR_VENKMAN
 	jnz	nmi_fromuserspace
 	/*
 	 * We've interrupted the kernel.  Preserve GS.base in %r12,
@@ -809,6 +866,7 @@ IDTVEC(nmi)
 	orq	%rdx,%r12
 	/* Retrieve and load the canonical value for GS.base. */
 	movq	TF_SIZE(%rsp),%rdx
+	ALIGN_FOR_VENKMAN
 	movl	%edx,%eax
 	shrq	$32,%rdx
 	wrmsr
@@ -816,6 +874,7 @@ IDTVEC(nmi)
 	movq	PCPU(KCR3),%rax
 	cmpq	$~0,%rax
 	je	1f
+	ALIGN_FOR_VENKMAN
 	movq	%rax,%cr3
 
 	ALIGN_FOR_VENKMAN
@@ -826,6 +885,7 @@ IDTVEC(nmi)
 	movl	%eax,%r14d
 	VENKMAN_PAD(1)
 	call	handle_ibrs_entry
+	ALIGN_FOR_VENKMAN
 	jmp	nmi_calltrap
 
 	ALIGN_FOR_VENKMAN
@@ -841,11 +901,13 @@ nmi_fromuserspace:
 	ALIGN_FOR_VENKMAN
 1:	VENKMAN_PAD(27)
 	call	handle_ibrs_entry
+	ALIGN_FOR_VENKMAN
 	movq	PCPU(CURPCB),%rdi
 	testq	%rdi,%rdi
 	jz	3f
 	orl	$PCB_FULL_IRET,PCB_FLAGS(%rdi)
 	testb	$CPUID_STDEXT_FSGSBASE,cpu_stdext_feature(%rip)
+	ALIGN_FOR_VENKMAN
 	jz	3f
 	cmpw	$KUF32SEL,TF_FS(%rsp)
 	jne	2f
@@ -869,6 +931,7 @@ nmi_calltrap:
 	movq	%rsp,%rdi
 	VENKMAN_PAD(24)
 	call	trap
+	ALIGN_FOR_VENKMAN
 	MEXITCOUNT
 #ifdef HWPMC_HOOKS
 	/*
@@ -891,12 +954,14 @@ nmi_calltrap:
 	 * committed to return through doreti.
 	 */
 	movq	%rsp,%rsi	/* source stack pointer */
+	ALIGN_FOR_VENKMAN
 	movq	$TF_SIZE,%rcx
 	movq	PCPU(RSP0),%rdx
 	subq	%rcx,%rdx
 	movq	%rdx,%rdi	/* destination stack pointer */
 	shrq	$3,%rcx		/* trap frame size in long words */
 	pushfq
+	ALIGN_FOR_VENKMAN
 	andq	$~(PSL_D | PSL_AC),(%rsp)
 	popfq
 	rep
@@ -911,6 +976,7 @@ nmi_calltrap:
 	 *   to allow for nested NMI interrupts.
 	 * - Enable interrupts, so that copyin() can work.
 	 */
+	ALIGN_FOR_VENKMAN
 	movl	%ss,%eax
 	pushq	%rax		/* tf_ss */
 	pushq	%rdx		/* tf_rsp (on kernel stack) */
@@ -938,11 +1004,13 @@ outofnmi:
 	orq	%rax,%rax
 	jz	nocallchain
 	movq	PCPU(CURTHREAD),%rdi		/* thread */
+	ALIGN_FOR_VENKMAN
 	movq	$PMC_FN_USER_CALLCHAIN,%rsi	/* command */
 	movq	%rsp,%rdx			/* frame */
 	sti
-	VENKMAN_PAD(21)
+	VENKMAN_PAD(15)
 	VENKMAN_CALLr(rax)
+	ALIGN_FOR_VENKMAN
 	cli
 
 	ALIGN_FOR_VENKMAN
@@ -957,6 +1025,7 @@ nocallchain:
 	je	1f
 	movl	%r14d,%eax
 	xorl	%edx,%edx
+	ALIGN_FOR_VENKMAN
 	movl	$MSR_IA32_SPEC_CTRL,%ecx
 	wrmsr
 	/*
@@ -971,7 +1040,8 @@ nocallchain:
 	wrmsr
 	cmpb	$0, nmi_flush_l1d_sw(%rip)
 	je	2f
-	VENKMAN_PAD(30)
+	ALIGN_FOR_VENKMAN
+	VENKMAN_PAD(27)
 	call	flush_l1d_sw		/* bhyve L1TF assist */
 
 	ALIGN_FOR_VENKMAN
@@ -1005,29 +1075,35 @@ IDTVEC(mchk)
 	subq	$TF_RIP,%rsp
 	movl	$(T_MCHK),TF_TRAPNO(%rsp)
 	movq	$0,TF_ADDR(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	$0,TF_ERR(%rsp)
 	movq	%rdi,TF_RDI(%rsp)
 	movq	%rsi,TF_RSI(%rsp)
 	movq	%rdx,TF_RDX(%rsp)
 	movq	%rcx,TF_RCX(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r8,TF_R8(%rsp)
 	movq	%r9,TF_R9(%rsp)
 	movq	%rax,TF_RAX(%rsp)
 	movq	%rbx,TF_RBX(%rsp)
 	movq	%rbp,TF_RBP(%rsp)
 	movq	%r10,TF_R10(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r11,TF_R11(%rsp)
 	movq	%r12,TF_R12(%rsp)
 	movq	%r13,TF_R13(%rsp)
 	movq	%r14,TF_R14(%rsp)
 	movq	%r15,TF_R15(%rsp)
+	ALIGN_FOR_VENKMAN
 	SAVE_SEGS
+	ALIGN_FOR_VENKMAN
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	pushfq
 	andq	$~(PSL_D | PSL_AC),(%rsp)
 	popfq
 	xorl	%ebx,%ebx
 	testb	$SEL_RPL_MASK,TF_CS(%rsp)
+	ALIGN_FOR_VENKMAN
 	jnz	mchk_fromuserspace
 	/*
 	 * We've interrupted the kernel.  Preserve GS.base in %r12,
@@ -1040,6 +1116,7 @@ IDTVEC(mchk)
 	orq	%rdx,%r12
 	/* Retrieve and load the canonical value for GS.base. */
 	movq	TF_SIZE(%rsp),%rdx
+	ALIGN_FOR_VENKMAN
 	movl	%edx,%eax
 	shrq	$32,%rdx
 	wrmsr
@@ -1047,6 +1124,7 @@ IDTVEC(mchk)
 	movq	PCPU(KCR3),%rax
 	cmpq	$~0,%rax
 	je	1f
+	ALIGN_FOR_VENKMAN
 	movq	%rax,%cr3
 
 	ALIGN_FOR_VENKMAN
@@ -1057,6 +1135,7 @@ IDTVEC(mchk)
 	movl	%eax,%r14d
 	VENKMAN_PAD(1)
 	call	handle_ibrs_entry
+	ALIGN_FOR_VENKMAN
 	jmp	mchk_calltrap
 
 	ALIGN_FOR_VENKMAN
@@ -1080,6 +1159,7 @@ mchk_calltrap:
 	movq	%rsp,%rdi
 	VENKMAN_PAD(24)
 	call	mca_intr
+	ALIGN_FOR_VENKMAN
 	MEXITCOUNT
 	testl	%ebx,%ebx	/* %ebx == 0 => return to userland */
 	jnz	doreti_exit
@@ -1090,6 +1170,7 @@ mchk_calltrap:
 	je	1f
 	movl	%r14d,%eax
 	xorl	%edx,%edx
+	ALIGN_FOR_VENKMAN
 	movl	$MSR_IA32_SPEC_CTRL,%ecx
 	wrmsr
 
@@ -1185,7 +1266,8 @@ doreti_ast:
 	je	doreti_exit
 	sti
 	movq	%rsp,%rdi	/* pass a pointer to the trapframe */
-	VENKMAN_PAD(29)
+	ALIGN_FOR_VENKMAN
+	VENKMAN_PAD(27)
 	call	ast
 	jmp	doreti_ast
 
@@ -1211,9 +1293,11 @@ doreti_exit:
 	 */
 	testb	$SEL_RPL_MASK,TF_CS(%rsp)
 	jz	ld_regs
+	ALIGN_FOR_VENKMAN
 	testl	$PCB_FULL_IRET,PCB_FLAGS(%r8)
 	jz	ld_regs
 	andl	$~PCB_FULL_IRET,PCB_FLAGS(%r8)
+	ALIGN_FOR_VENKMAN
 	testl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	je	set_segs
 
@@ -1268,6 +1352,7 @@ ld_gs:
 	 */
 	movl	$MSR_KGSBASE,%ecx
 	cmpw	$KUG32SEL,%si
+	ALIGN_FOR_VENKMAN
 	jne	1f
 	movl	PCB_GSBASE(%r8),%eax
 	movl	PCB_GSBASE+4(%r8),%edx
@@ -1299,13 +1384,16 @@ ld_regs:
 	testb	$SEL_RPL_MASK,TF_CS(%rsp) /* Did we come from kernel? */
 	jz	2f			/* keep running with kernel GS.base */
 	cli
-	VENKMAN_PAD(2)
+	ALIGN_FOR_VENKMAN
+	VENKMAN_PAD(27)
 	call	handle_ibrs_exit_rs
+	ALIGN_FOR_VENKMAN
 	cmpq	$~0,PCPU(UCR3)
 	je	1f
 	pushq	%rdx
 	movq	PCPU(PTI_RSP0),%rdx
 	subq	$PTI_SIZE,%rdx
+	ALIGN_FOR_VENKMAN
 	movq	%rax,PTI_RAX(%rdx)
 	popq	%rax
 	movq	%rax,PTI_RDX(%rdx)
@@ -1313,11 +1401,13 @@ ld_regs:
 	movq	%rax,PTI_RIP(%rdx)
 	movq	TF_CS(%rsp),%rax
 	movq	%rax,PTI_CS(%rdx)
+	ALIGN_FOR_VENKMAN
 	movq	TF_RFLAGS(%rsp),%rax
 	movq	%rax,PTI_RFLAGS(%rdx)
 	movq	TF_RSP(%rsp),%rax
 	movq	%rax,PTI_RSP(%rdx)
 	movq	TF_SS(%rsp),%rax
+	ALIGN_FOR_VENKMAN
 	movq	%rax,PTI_SS(%rdx)
 	movq	PCPU(UCR3),%rax
 	swapgs
@@ -1326,6 +1416,7 @@ ld_regs:
 	popq	%rdx
 	popq	%rax
 	addq	$8,%rsp
+	ALIGN_FOR_VENKMAN
 	jmp	doreti_iret
 
 	ALIGN_FOR_VENKMAN
@@ -1345,6 +1436,7 @@ set_segs:
 	movw	%ax,TF_DS(%rsp)
 	movw	%ax,TF_ES(%rsp)
 	movw	$KUF32SEL,TF_FS(%rsp)
+	ALIGN_FOR_VENKMAN
 	movw	$KUG32SEL,TF_GS(%rsp)
 	jmp	do_segs
 
@@ -1364,6 +1456,7 @@ doreti_iret_fault:
 	movq	%rcx,TF_RCX(%rsp)
 	VENKMAN_PAD(5)
 	call	handle_ibrs_entry
+	ALIGN_FOR_VENKMAN
 	testb	$SEL_RPL_MASK,TF_CS(%rsp)
 	jz	1f
 	sti
@@ -1371,21 +1464,25 @@ doreti_iret_fault:
 	ALIGN_FOR_VENKMAN
 1:
 	SAVE_SEGS
+	ALIGN_FOR_VENKMAN
 	movl	$TF_HASSEGS,TF_FLAGS(%rsp)
 	movq	%rdi,TF_RDI(%rsp)
 	movq	%rsi,TF_RSI(%rsp)
 	movq	%r8,TF_R8(%rsp)
 	movq	%r9,TF_R9(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%rbx,TF_RBX(%rsp)
 	movq	%rbp,TF_RBP(%rsp)
 	movq	%r10,TF_R10(%rsp)
 	movq	%r11,TF_R11(%rsp)
 	movq	%r12,TF_R12(%rsp)
 	movq	%r13,TF_R13(%rsp)
+	ALIGN_FOR_VENKMAN
 	movq	%r14,TF_R14(%rsp)
 	movq	%r15,TF_R15(%rsp)
 	movl	$T_PROTFLT,TF_TRAPNO(%rsp)
 	movq	$0,TF_ERR(%rsp)	/* XXX should be the error code */
+	ALIGN_FOR_VENKMAN
 	movq	$0,TF_ADDR(%rsp)
 	FAKE_MCOUNT(TF_RIP(%rsp))
 	jmp	calltrap

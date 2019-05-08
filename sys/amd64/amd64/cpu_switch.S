@@ -73,6 +73,7 @@ ENTRY(cpu_throw)
 	movq	%rsi,%rdi
 	VENKMAN_PAD(21)
 	call	pmap_activate_sw
+	ALIGN_FOR_VENKMAN
 	jmp	sw1
 END(cpu_throw)
 
@@ -95,16 +96,19 @@ ENTRY(cpu_switch)
 	movq	%r13,PCB_R13(%r8)
 	movq	%r12,PCB_R12(%r8)
 	movq	%rbp,PCB_RBP(%r8)
+	ALIGN_FOR_VENKMAN
 	movq	%rsp,PCB_RSP(%r8)
 	movq	%rbx,PCB_RBX(%r8)
 	movq	%rax,PCB_RIP(%r8)
 
 	testl	$PCB_FULL_IRET,PCB_FLAGS(%r8)
 	jnz	2f
+	ALIGN_FOR_VENKMAN
 	orl	$PCB_FULL_IRET,PCB_FLAGS(%r8)
 	testl	$TDP_KTHREAD,TD_PFLAGS(%rdi)
 	jnz	2f
 	testb	$CPUID_STDEXT_FSGSBASE,cpu_stdext_feature(%rip)
+	ALIGN_FOR_VENKMAN
 	jz	2f
 	movl	%fs,%eax
 	cmpl	$KUF32SEL,%eax
@@ -138,6 +142,7 @@ done_store_dr:
 	movq	PCB_SAVEFPU(%r8),%r8
 	clts
 	cmpl	$0,use_xsave(%rip)
+	ALIGN_FOR_VENKMAN
 	jne	1f
 	fxsave	(%r8)
 	jmp	2f
@@ -184,6 +189,7 @@ sw1:
 
 	/* Skip loading LDT and user fsbase/gsbase for kthreads */
 	testl	$TDP_KTHREAD,TD_PFLAGS(%r12)
+	ALIGN_FOR_VENKMAN
 	jnz	do_kthread
 
 	/*
@@ -231,6 +237,7 @@ done_tss:
 	movq	%r8,PCPU(CURPCB)
 	/* Update the TSS_RSP0 pointer for the next interrupt */
 	cmpq	$~0,PCPU(UCR3)
+	ALIGN_FOR_VENKMAN
 	je	1f
 	movq	PCPU(PTI_RSP0),%rax
 	movq	%rax,TSS_RSP0(%rdx)
@@ -258,10 +265,12 @@ done_load_dr:
 	movq	PCB_RSP(%r8),%rsp
 	movq	PCB_RBX(%r8),%rbx
 	movq	PCB_RIP(%r8),%rax
+	ALIGN_FOR_VENKMAN
 	movq	%rax,(%rsp)
 	movq	PCPU(CURTHREAD),%rdi
-	VENKMAN_PAD(15)
+	VENKMAN_PAD(14)
 	call	fpu_activate_sw
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 
 	/*
@@ -283,10 +292,12 @@ store_dr:
 	movq	%dr3,%r12
 	movq	%dr6,%r11
 	movq	%r15,PCB_DR0(%r8)
+	ALIGN_FOR_VENKMAN
 	movq	%r14,PCB_DR1(%r8)
 	movq	%r13,PCB_DR2(%r8)
 	movq	%r12,PCB_DR3(%r8)
 	movq	%r11,PCB_DR6(%r8)
+	ALIGN_FOR_VENKMAN
 	movq	%rax,PCB_DR7(%r8)
 	andq	$0x0000fc00, %rax		/* disable all watchpoints */
 	movq	%rax,%dr7
@@ -299,12 +310,14 @@ load_dr:
 	movq	PCB_DR1(%r8),%r14
 	movq	PCB_DR2(%r8),%r13
 	movq	PCB_DR3(%r8),%r12
+	ALIGN_FOR_VENKMAN
 	movq	PCB_DR6(%r8),%r11
 	movq	PCB_DR7(%r8),%rcx
 	movq	%r15,%dr0
 	movq	%r14,%dr1
 	/* Preserve reserved bits in %dr7 */
 	andq	$0x0000fc00,%rax
+	ALIGN_FOR_VENKMAN
 	andq	$~0x0000fc00,%rcx
 	movq	%r13,%dr2
 	movq	%r12,%dr3
@@ -335,6 +348,7 @@ do_ldt:	movq	PCPU(LDT),%rax
 	movq	%rdx,(%rax)
 	movq	P_MD+MD_LDT_SD+8(%rcx),%rdx
 	movq	%rdx,8(%rax)
+	ALIGN_FOR_VENKMAN
 	movl	$LDTSEL,%eax
 	jmp	ld_ldt
 END(cpu_switch)
@@ -354,6 +368,7 @@ ENTRY(savectx)
 	movq	%r12,PCB_R12(%rdi)
 	movq	%r13,PCB_R13(%rdi)
 	movq	%r14,PCB_R14(%rdi)
+	ALIGN_FOR_VENKMAN
 	movq	%r15,PCB_R15(%rdi)
 
 	movq	%cr0,%rax
@@ -365,6 +380,7 @@ ENTRY(savectx)
 	movq	%cr4,%rax
 	movq	%rax,PCB_CR4(%rdi)
 
+	ALIGN_FOR_VENKMAN
 	movq	%dr0,%rax
 	movq	%rax,PCB_DR0(%rdi)
 	movq	%dr1,%rax
@@ -372,6 +388,7 @@ ENTRY(savectx)
 	movq	%dr2,%rax
 	movq	%rax,PCB_DR2(%rdi)
 	movq	%dr3,%rax
+	ALIGN_FOR_VENKMAN
 	movq	%rax,PCB_DR3(%rdi)
 	movq	%dr6,%rax
 	movq	%rax,PCB_DR6(%rdi)
@@ -379,6 +396,7 @@ ENTRY(savectx)
 	movq	%rax,PCB_DR7(%rdi)
 
 	movl	$MSR_FSBASE,%ecx
+	ALIGN_FOR_VENKMAN
 	rdmsr
 	movl	%eax,PCB_FSBASE(%rdi)
 	movl	%edx,PCB_FSBASE+4(%rdi)
@@ -389,6 +407,7 @@ ENTRY(savectx)
 	movl	$MSR_KGSBASE,%ecx
 	rdmsr
 	movl	%eax,PCB_KGSBASE(%rdi)
+	ALIGN_FOR_VENKMAN
 	movl	%edx,PCB_KGSBASE+4(%rdi)
 	movl	$MSR_EFER,%ecx
 	rdmsr
@@ -396,26 +415,31 @@ ENTRY(savectx)
 	movl	%edx,PCB_EFER+4(%rdi)
 	movl	$MSR_STAR,%ecx
 	rdmsr
+	ALIGN_FOR_VENKMAN
 	movl	%eax,PCB_STAR(%rdi)
 	movl	%edx,PCB_STAR+4(%rdi)
 	movl	$MSR_LSTAR,%ecx
 	rdmsr
 	movl	%eax,PCB_LSTAR(%rdi)
+	ALIGN_FOR_VENKMAN
 	movl	%edx,PCB_LSTAR+4(%rdi)
 	movl	$MSR_CSTAR,%ecx
 	rdmsr
 	movl	%eax,PCB_CSTAR(%rdi)
 	movl	%edx,PCB_CSTAR+4(%rdi)
+	ALIGN_FOR_VENKMAN
 	movl	$MSR_SF_MASK,%ecx
 	rdmsr
 	movl	%eax,PCB_SFMASK(%rdi)
 	movl	%edx,PCB_SFMASK+4(%rdi)
 
 	sgdt	PCB_GDT(%rdi)
+	ALIGN_FOR_VENKMAN
 	sidt	PCB_IDT(%rdi)
 	sldt	PCB_LDT(%rdi)
 	str	PCB_TR(%rdi)
 
+	ALIGN_FOR_VENKMAN
 	movl	$1,%eax
 	VENKMAN_RET
 END(savectx)
@@ -436,6 +460,7 @@ ENTRY(resumectx)
 	movw	%ax,%ss
 	movl	$KUF32SEL,%eax
 	movw	%ax,%fs
+	ALIGN_FOR_VENKMAN
 	movl	$KUG32SEL,%eax
 	movw	%ax,%gs
 
@@ -446,6 +471,7 @@ ENTRY(resumectx)
 	movl	$MSR_GSBASE,%ecx
 	movl	PCB_GSBASE(%rdi),%eax
 	movl	4 + PCB_GSBASE(%rdi),%edx
+	ALIGN_FOR_VENKMAN
 	wrmsr
 	movl	$MSR_KGSBASE,%ecx
 	movl	PCB_KGSBASE(%rdi),%eax
@@ -458,12 +484,14 @@ ENTRY(resumectx)
 	wrmsr
 
 	/* Restore fast syscall stuff. */
+	ALIGN_FOR_VENKMAN
 	movl	$MSR_STAR,%ecx
 	movl	PCB_STAR(%rdi),%eax
 	movl	4 + PCB_STAR(%rdi),%edx
 	wrmsr
 	movl	$MSR_LSTAR,%ecx
 	movl	PCB_LSTAR(%rdi),%eax
+	ALIGN_FOR_VENKMAN
 	movl	4 + PCB_LSTAR(%rdi),%edx
 	wrmsr
 	movl	$MSR_CSTAR,%ecx
@@ -471,6 +499,7 @@ ENTRY(resumectx)
 	movl	4 + PCB_CSTAR(%rdi),%edx
 	wrmsr
 	movl	$MSR_SF_MASK,%ecx
+	ALIGN_FOR_VENKMAN
 	movl	PCB_SFMASK(%rdi),%eax
 	wrmsr
 
@@ -481,6 +510,7 @@ ENTRY(resumectx)
 	movq	%rax,%cr2
 	movq	PCB_CR4(%rdi),%rax
 	movq	%rax,%cr4
+	ALIGN_FOR_VENKMAN
 	movq	PCB_CR3(%rdi),%rax
 	movq	%rax,%cr3
 
@@ -493,6 +523,7 @@ ENTRY(resumectx)
 
 	/* Clear "task busy" bit and reload TR. */
 	movq	PCPU(TSS),%rax
+	ALIGN_FOR_VENKMAN
 	andb	$(~SDT_SYSBSY | SDT_SYSTSS),5(%rax)
 	movw	PCB_TR(%rdi),%ax
 	ltr	%ax
@@ -505,10 +536,12 @@ ENTRY(resumectx)
 	movq	%rax,%dr0
 	movq	PCB_DR1(%rdi),%rax
 	movq	%rax,%dr1
+	ALIGN_FOR_VENKMAN
 	movq	PCB_DR2(%rdi),%rax
 	movq	%rax,%dr2
 	movq	PCB_DR3(%rdi),%rax
 	movq	%rax,%dr3
+	ALIGN_FOR_VENKMAN
 	movq	PCB_DR6(%rdi),%rax
 	movq	%rax,%dr6
 	movq	PCB_DR7(%rdi),%rax
@@ -518,6 +551,7 @@ ENTRY(resumectx)
 	movq	PCB_R15(%rdi),%r15
 	movq	PCB_R14(%rdi),%r14
 	movq	PCB_R13(%rdi),%r13
+	ALIGN_FOR_VENKMAN
 	movq	PCB_R12(%rdi),%r12
 	movq	PCB_RBP(%rdi),%rbp
 	movq	PCB_RSP(%rdi),%rsp
@@ -527,6 +561,7 @@ ENTRY(resumectx)
 	movq	PCB_RIP(%rdi),%rax
 	movq	%rax,(%rsp)
 
+	ALIGN_FOR_VENKMAN
 	xorl	%eax,%eax
 	VENKMAN_RET
 END(resumectx)
