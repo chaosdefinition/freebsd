@@ -84,12 +84,10 @@ padlock_cbc(void *in, void *out, size_t count, void *key, union padlock_cw *cw,
     void *iv)
 {
 #ifdef __GNUCLIKE_ASM
-	/* The .byte line is really VIA C3 "xcrypt-cbc" instruction */
 	__asm __volatile(
 		"pushf				\n\t"
 		"popf				\n\t"
-		"rep				\n\t"
-		".byte	0x0f, 0xa7, 0xd0"
+		"rep xcryptcbc"
 			: "+a" (iv), "+c" (count), "+D" (out), "+S" (in)
 			: "b" (key), "d" (cw)
 			: "cc", "memory"

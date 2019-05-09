@@ -128,7 +128,7 @@ padlock_do_sha1(const u_char *in, u_char *out, int count)
 
 #ifdef __GNUCLIKE_ASM
 	__asm __volatile(
-		".byte  0xf3, 0x0f, 0xa6, 0xc8" /* rep xsha1 */
+		"repz xsha1"
 			: "+S"(in), "+D"(result)
 			: "c"(count), "a"(0)
 		);
@@ -155,7 +155,7 @@ padlock_do_sha256(const char *in, char *out, int count)
 
 #ifdef __GNUCLIKE_ASM
 	__asm __volatile(
-		".byte  0xf3, 0x0f, 0xa6, 0xd0" /* rep xsha256 */
+		"repz xsha256"
 			: "+S"(in), "+D"(result)
 			: "c"(count), "a"(0)
 		);
