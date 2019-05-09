@@ -48,18 +48,21 @@
  * Save the guest context.
  */
 #define	VMX_GUEST_SAVE							\
+	ALIGN_FOR_VENKMAN;						\
 	movq	%rdi,VMXCTX_GUEST_RDI(%rsp);				\
 	movq	%rsi,VMXCTX_GUEST_RSI(%rsp);				\
 	movq	%rdx,VMXCTX_GUEST_RDX(%rsp);				\
 	movq	%rcx,VMXCTX_GUEST_RCX(%rsp);				\
 	movq	%r8,VMXCTX_GUEST_R8(%rsp);				\
 	movq	%r9,VMXCTX_GUEST_R9(%rsp);				\
+	ALIGN_FOR_VENKMAN;						\
 	movq	%rax,VMXCTX_GUEST_RAX(%rsp);				\
 	movq	%rbx,VMXCTX_GUEST_RBX(%rsp);				\
 	movq	%rbp,VMXCTX_GUEST_RBP(%rsp);				\
 	movq	%r10,VMXCTX_GUEST_R10(%rsp);				\
 	movq	%r11,VMXCTX_GUEST_R11(%rsp);				\
 	movq	%r12,VMXCTX_GUEST_R12(%rsp);				\
+	ALIGN_FOR_VENKMAN;						\
 	movq	%r13,VMXCTX_GUEST_R13(%rsp);				\
 	movq	%r14,VMXCTX_GUEST_R14(%rsp);				\
 	movq	%r15,VMXCTX_GUEST_R15(%rsp);				\
@@ -78,6 +81,7 @@
  * host context in case of an error with 'vmlaunch' or 'vmresume'.
  */
 #define	VMX_GUEST_RESTORE						\
+	ALIGN_FOR_VENKMAN;						\
 	movq	%rdi,%rsp;						\
 	movq	VMXCTX_GUEST_CR2(%rdi),%rsi;				\
 	movq	%rsi,%cr2;						\
@@ -86,6 +90,7 @@
 	movq	VMXCTX_GUEST_RCX(%rdi),%rcx;				\
 	movq	VMXCTX_GUEST_R8(%rdi),%r8;				\
 	movq	VMXCTX_GUEST_R9(%rdi),%r9;				\
+	ALIGN_FOR_VENKMAN;						\
 	movq	VMXCTX_GUEST_RAX(%rdi),%rax;				\
 	movq	VMXCTX_GUEST_RBX(%rdi),%rbx;				\
 	movq	VMXCTX_GUEST_RBP(%rdi),%rbp;				\
@@ -94,6 +99,7 @@
 	movq	VMXCTX_GUEST_R12(%rdi),%r12;				\
 	movq	VMXCTX_GUEST_R13(%rdi),%r13;				\
 	movq	VMXCTX_GUEST_R14(%rdi),%r14;				\
+	ALIGN_FOR_VENKMAN;						\
 	movq	VMXCTX_GUEST_R15(%rdi),%r15;				\
 	movq	VMXCTX_GUEST_RDI(%rdi),%rdi; /* restore rdi the last */
 
@@ -117,19 +123,23 @@
  * Assumes that %rdi holds a pointer to the 'vmxctx'.
  */
 #define	VMX_HOST_SAVE							\
+	ALIGN_FOR_VENKMAN;						\
 	movq    %r15, VMXCTX_HOST_R15(%rdi);				\
 	movq    %r14, VMXCTX_HOST_R14(%rdi);				\
 	movq    %r13, VMXCTX_HOST_R13(%rdi);				\
 	movq    %r12, VMXCTX_HOST_R12(%rdi);				\
+	ALIGN_FOR_VENKMAN;						\
 	movq    %rbp, VMXCTX_HOST_RBP(%rdi);				\
 	movq    %rsp, VMXCTX_HOST_RSP(%rdi);				\
 	movq    %rbx, VMXCTX_HOST_RBX(%rdi);				\
 
 #define	VMX_HOST_RESTORE						\
+	ALIGN_FOR_VENKMAN;						\
 	movq	VMXCTX_HOST_R15(%rdi), %r15;				\
 	movq	VMXCTX_HOST_R14(%rdi), %r14;				\
 	movq	VMXCTX_HOST_R13(%rdi), %r13;				\
 	movq	VMXCTX_HOST_R12(%rdi), %r12;				\
+	ALIGN_FOR_VENKMAN;						\
 	movq	VMXCTX_HOST_RBP(%rdi), %rbp;				\
 	movq	VMXCTX_HOST_RSP(%rdi), %rsp;				\
 	movq	VMXCTX_HOST_RBX(%rdi), %rbx;				\
@@ -152,6 +162,7 @@ ENTRY(vmx_enter_guest)
 	 * Activate guest pmap on this cpu.
 	 */
 	movq	VMXCTX_PMAP(%rdi), %r11
+	ALIGN_FOR_VENKMAN
 	movl	PCPU(CPUID), %eax
 	LK btsl	%eax, PM_ACTIVE(%r11)
 
@@ -161,6 +172,7 @@ ENTRY(vmx_enter_guest)
 	 */
 	movq	PM_EPTGEN(%r11), %r10
 	cmpq	%r10, VMX_EPTGEN(%rsi, %rax, 8)
+	ALIGN_FOR_VENKMAN
 	je	guest_restore
 
 	/* Refresh 'vmx->eptgen[curcpu]' */
@@ -170,6 +182,7 @@ ENTRY(vmx_enter_guest)
 	mov	%rsp, %r11
 	movq	VMX_EPTP(%rsi), %rax
 	movq	%rax, -16(%r11)
+	ALIGN_FOR_VENKMAN
 	movq	$0x0, -8(%r11)
 	mov	$0x1, %eax		/* Single context invalidate */
 	invept	-16(%r11), %rax
@@ -260,12 +273,14 @@ vmx_exit_guest_flush_rsb:
 	/*
 	 * Deactivate guest pmap from this cpu.
 	 */
+	ALIGN_FOR_VENKMAN
 	movq	VMXCTX_PMAP(%rdi), %r11
 	movl	PCPU(CPUID), %r10d
 	LK btrl	%r10d, PM_ACTIVE(%r11)
 
 	VMX_HOST_RESTORE
 
+	ALIGN_FOR_VENKMAN
 	VMX_GUEST_CLOBBER
 
 	/*
@@ -313,12 +328,14 @@ vmx_exit_guest:
 	/*
 	 * Deactivate guest pmap from this cpu.
 	 */
+	ALIGN_FOR_VENKMAN
 	movq	VMXCTX_PMAP(%rdi), %r11
 	movl	PCPU(CPUID), %r10d
 	LK btrl	%r10d, PM_ACTIVE(%r11)
 
 	VMX_HOST_RESTORE
 
+	ALIGN_FOR_VENKMAN
 	VMX_GUEST_CLOBBER
 
 	/*
@@ -327,6 +344,7 @@ vmx_exit_guest:
 	 */
 	movl	$VMX_GUEST_VMEXIT, %eax
 	VLEAVE
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 END(vmx_enter_guest)
 

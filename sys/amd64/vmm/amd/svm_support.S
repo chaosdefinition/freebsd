@@ -79,6 +79,7 @@ ENTRY(svm_launch)
 	movq SCTX_R8(%rsi), %r8
 	movq SCTX_R9(%rsi), %r9
 	movq SCTX_R10(%rsi), %r10
+	ALIGN_FOR_VENKMAN
 	movq SCTX_R11(%rsi), %r11
 	movq SCTX_R12(%rsi), %r12
 	movq SCTX_R13(%rsi), %r13
@@ -87,6 +88,7 @@ ENTRY(svm_launch)
 	movq SCTX_RBP(%rsi), %rbp
 	movq SCTX_RBX(%rsi), %rbx
 	movq SCTX_RCX(%rsi), %rcx
+	ALIGN_FOR_VENKMAN
 	movq SCTX_RDX(%rsi), %rdx
 	movq SCTX_RDI(%rsi), %rdi
 	movq SCTX_RSI(%rsi), %rsi	/* %rsi must be restored last */
@@ -102,6 +104,7 @@ ENTRY(svm_launch)
 	 */
 	movq %r8, SCTX_R8(%rax)
 	movq %r9, SCTX_R9(%rax)
+	ALIGN_FOR_VENKMAN
 	movq %r10, SCTX_R10(%rax)
 	movq %r11, SCTX_R11(%rax)
 	movq %r12, SCTX_R12(%rax)
@@ -110,6 +113,7 @@ ENTRY(svm_launch)
 	movq %r15, SCTX_R15(%rax)
 	movq %rbp, SCTX_RBP(%rax)
 	movq %rbx, SCTX_RBX(%rax)
+	ALIGN_FOR_VENKMAN
 	movq %rcx, SCTX_RCX(%rax)
 	movq %rdx, SCTX_RDX(%rax)
 	movq %rdi, SCTX_RDI(%rax)
@@ -152,6 +156,7 @@ ENTRY(svm_launch)
 	pop %rdx
 	mov %edx, %eax
 	shr $32, %rdx
+	ALIGN_FOR_VENKMAN
 	mov $MSR_GSBASE, %rcx
 	wrmsr
 
@@ -165,6 +170,7 @@ ENTRY(svm_launch)
 	xor %r8, %r8
 	xor %r9, %r9
 	xor %r10, %r10
+	ALIGN_FOR_VENKMAN
 	xor %r11, %r11
 
 	VLEAVE

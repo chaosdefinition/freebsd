@@ -50,9 +50,11 @@ ENTRY(sgx_encls)
 	movl	%edi,%eax
 	movq	%rsi,%rbx
 	xchgq	%rdx,%rcx
+	ALIGN_FOR_VENKMAN
 	movq	$sgx_onfault,PCB_ONFAULT(%r8)
-	VENKMAN_PAD(2)
+	VENKMAN_PAD(18)
 	.byte 0x0f, 0x01, 0xcf
+	ALIGN_FOR_VENKMAN
 	movq	$0,PCB_ONFAULT(%r8)
 	popq	%rbx
 	POP_FRAME_POINTER

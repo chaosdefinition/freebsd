@@ -37,6 +37,7 @@
 #include "assym.inc"
 
 #define INTR_POP				\
+	ALIGN_FOR_VENKMAN;			\
 	MEXITCOUNT;				\
 	movq	TF_RDI(%rsp),%rdi;		\
 	movq	TF_RSI(%rsp),%rsi;		\
@@ -44,18 +45,21 @@
 	movq	TF_RCX(%rsp),%rcx;		\
 	movq	TF_R8(%rsp),%r8;		\
 	movq	TF_R9(%rsp),%r9;		\
+	ALIGN_FOR_VENKMAN;			\
 	movq	TF_RAX(%rsp),%rax;		\
 	movq	TF_RBX(%rsp),%rbx;		\
 	movq	TF_RBP(%rsp),%rbp;		\
 	movq	TF_R10(%rsp),%r10;		\
 	movq	TF_R11(%rsp),%r11;		\
 	movq	TF_R12(%rsp),%r12;		\
+	ALIGN_FOR_VENKMAN;			\
 	movq	TF_R13(%rsp),%r13;		\
 	movq	TF_R14(%rsp),%r14;		\
 	movq	TF_R15(%rsp),%r15;		\
 	testb	$SEL_RPL_MASK,TF_CS(%rsp);	\
 	jz	1f;				\
 	cli;					\
+	ALIGN_FOR_VENKMAN;			\
 	swapgs;					\
 	ALIGN_FOR_VENKMAN;			\
 1:	addq	$TF_RIP,%rsp;
@@ -74,6 +78,7 @@
 	movq	TF_RAX(%rsp), %rdx
 	VENKMAN_PAD(8)
 	call	dtrace_invop
+	ALIGN_FOR_VENKMAN
 	ALTENTRY(dtrace_invop_callsite)
 	cmpl	$DTRACE_INVOP_PUSHL_EBP, %eax
 	je	bp_push
@@ -82,6 +87,7 @@
 	cmpl	$DTRACE_INVOP_NOP, %eax
 	je	bp_nop
 	cmpl	$DTRACE_INVOP_RET, %eax
+	ALIGN_FOR_VENKMAN
 	je	bp_ret
 
 	/* When all else fails handle the trap in the usual way. */
@@ -100,12 +106,14 @@ bp_push:
 	movq	%rax, 8(%rsp)		/* store calling RIP */
 	movq	32(%rsp), %rax		/* load calling CS */
 	movq	%rax, 16(%rsp)		/* store calling CS */
+	ALIGN_FOR_VENKMAN
 	movq	40(%rsp), %rax		/* load calling RFLAGS */
 	movq	%rax, 24(%rsp)		/* store calling RFLAGS */
 	movq	48(%rsp), %rax		/* load calling RSP */
 	subq	$8, %rax		/* make room for %rbp */
 	movq	%rax, 32(%rsp)		/* store calling RSP */
 	movq	56(%rsp), %rax		/* load calling SS */
+	ALIGN_FOR_VENKMAN
 	movq	%rax, 40(%rsp)		/* store calling SS */
 	movq	32(%rsp), %rax		/* reload calling RSP */
 	movq	%rbp, (%rax)		/* store %rbp there */
@@ -129,6 +137,7 @@ bp_leave:
 	movq	(%rbp), %rax		/* get new %rbp */
 	addq	$8, %rbp		/* adjust new %rsp */
 	movq	%rbp, 32(%rsp)		/* store new %rsp */
+	ALIGN_FOR_VENKMAN
 	movq	%rax, %rbp		/* set new %rbp */
 	popq	%rax			/* pop off temp */
 	iretq				/* return from interrupt */
@@ -245,6 +254,7 @@ dtrace_copystr(uintptr_t uaddr, uintptr_t kaddr, size_t size,
 	cmpb	$0, %al
 	je	2f
 	testq	$0xfff, %rdx		/* test if count is 4k-aligned */
+	ALIGN_FOR_VENKMAN
 	jnz	1f			/* if not, continue with copying */
 	testq	$CPU_DTRACE_BADADDR, (%rcx) /* load and test dtrace flags */
 	jnz	2f
@@ -324,9 +334,11 @@ dtrace_probe_error(dtrace_state_t *state, dtrace_epid_t epid, int which,
 	movq	%rdx, %rcx
 	movq	%rsi, %rdx
 	movq	%rdi, %rsi
+	ALIGN_FOR_VENKMAN
 	movl	dtrace_probeid_error(%rip), %edi
-	VENKMAN_PAD(26)
+	VENKMAN_PAD(21)
 	call	dtrace_probe
+	ALIGN_FOR_VENKMAN
 	addq	$0x8, %rsp
 	leave
 	VENKMAN_RET

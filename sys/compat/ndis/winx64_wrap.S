@@ -100,6 +100,7 @@ ENTRY(x86_64_wrap)
 	mov	%rcx,%r10	# temporarily save %rcx in scratch
 	lea	56+8(%rbp),%rsi	# source == old stack top (stack+56)
 	mov	%rsp,%rdi	# destination == new stack top
+	ALIGN_FOR_VENKMAN
 	mov	$10,%rcx	# count == 10 quadwords
 	rep
 	movsq			# copy old stack contents to new location
@@ -109,6 +110,7 @@ ENTRY(x86_64_wrap)
 	mov     %r9,%rcx	# set up arg3 (%r9 -> %rcx)
 	mov	40+8(%rbp),%r8	# set up arg4 (stack+40 -> %r8)
 	mov	48+8(%rbp),%r9	# set up arg5 (stack+48 -> %r9)
+	ALIGN_FOR_VENKMAN
 	xor	%rax,%rax	# clear return value
 
 	ALIGN_FOR_VENKMAN
@@ -116,6 +118,7 @@ x86_64_wrap_call:
 	mov	$0xFF00FF00FF00FF00,%r11
 	VENKMAN_PAD(15)
 	VENKMAN_CALLr(r11)	# call routine
+	ALIGN_FOR_VENKMAN
 	mov	96-16(%rsp),%rdi# restore %rdi
 	mov	96-8(%rsp),%rsi	# restore %rsi
 	leave			# delete space on stack
@@ -132,6 +135,7 @@ ENTRY(x86_64_call1)
 	mov	%rsi,%rcx
 	VENKMAN_PAD(19)
 	VENKMAN_CALLr(rdi)
+	ALIGN_FOR_VENKMAN
 	addq	$40,%rsp
 	VENKMAN_RET
 
@@ -141,6 +145,7 @@ ENTRY(x86_64_call2)
 	/* %rdx is already correct */
 	VENKMAN_PAD(19)
 	VENKMAN_CALLr(rdi)
+	ALIGN_FOR_VENKMAN
 	addq	$40,%rsp
 	VENKMAN_RET
 
@@ -150,6 +155,7 @@ ENTRY(x86_64_call3)
 	mov	%rsi,%rcx
 	VENKMAN_PAD(16)
 	VENKMAN_CALLr(rdi)
+	ALIGN_FOR_VENKMAN
 	addq	$40,%rsp
 	VENKMAN_RET
 
@@ -160,6 +166,7 @@ ENTRY(x86_64_call4)
 	mov	%rsi,%rcx
 	VENKMAN_PAD(13)
 	VENKMAN_CALLr(rdi)
+	ALIGN_FOR_VENKMAN
 	addq	$40,%rsp
 	VENKMAN_RET
 
@@ -171,6 +178,7 @@ ENTRY(x86_64_call5)
 	mov	%rsi,%rcx
 	VENKMAN_PAD(8)
 	VENKMAN_CALLr(rdi)
+	ALIGN_FOR_VENKMAN
 	addq	$48,%rsp
 	VENKMAN_RET
 
@@ -181,8 +189,10 @@ ENTRY(x86_64_call6)
 	mov	%rax,40(%rsp)
 	mov	%r8,%r9
 	mov	%rcx,%r8
+	ALIGN_FOR_VENKMAN
 	mov	%rsi,%rcx
-	VENKMAN_PAD(30)
+	VENKMAN_PAD(23)
 	VENKMAN_CALLr(rdi)
+	ALIGN_FOR_VENKMAN
 	addq	$56,%rsp
 	VENKMAN_RET

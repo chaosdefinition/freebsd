@@ -43,6 +43,7 @@ ENTRY(futex_xchgl_nosmap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	xchgl	%edi,(%rsi)
@@ -56,6 +57,7 @@ ENTRY(futex_xchgl_smap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	stac
@@ -64,6 +66,7 @@ ENTRY(futex_xchgl_smap)
 	movl	%edi,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 END(futex_xchgl_smap)
 
@@ -71,6 +74,7 @@ ENTRY(futex_addl_nosmap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 #ifdef SMP
@@ -87,6 +91,7 @@ ENTRY(futex_addl_smap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	stac
@@ -98,6 +103,7 @@ ENTRY(futex_addl_smap)
 	movl	%edi,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 END(futex_addl_smap)
 
@@ -105,6 +111,7 @@ ENTRY(futex_orl_nosmap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
@@ -127,6 +134,7 @@ ENTRY(futex_orl_smap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
@@ -144,6 +152,7 @@ ENTRY(futex_orl_smap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 END(futex_orl_smap)
 
@@ -151,6 +160,7 @@ ENTRY(futex_andl_nosmap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
@@ -173,6 +183,7 @@ ENTRY(futex_andl_smap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
@@ -190,6 +201,7 @@ ENTRY(futex_andl_smap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 END(futex_andl_smap)
 
@@ -197,6 +209,7 @@ ENTRY(futex_xorl_nosmap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
@@ -219,6 +232,7 @@ ENTRY(futex_xorl_smap)
 	movq	PCPU(CURPCB),%r8
 	movq	$futex_fault,PCB_ONFAULT(%r8)
 	movq	$VM_MAXUSER_ADDRESS-4,%rax
+	ALIGN_FOR_VENKMAN
 	cmpq	%rax,%rsi
 	ja	futex_fault
 	movl	(%rsi),%eax
@@ -236,5 +250,6 @@ ENTRY(futex_xorl_smap)
 	movl	%eax,(%rdx)
 	xorl	%eax,%eax
 	movq	%rax,PCB_ONFAULT(%r8)
+	ALIGN_FOR_VENKMAN
 	VENKMAN_RET
 END(futex_xorl_smap)
