@@ -59,6 +59,7 @@ mptramp_start:
 	sall	$4, %ebx		/* %ebx is now our relocation base */
 	orl	%ebx, lgdt_desc-mptramp_start+2
 	orl	%ebx, jmp_32-mptramp_start+2
+	ALIGN_FOR_VENKMAN
 	orl	%ebx, jmp_64-mptramp_start+1
 
 	/*
@@ -81,6 +82,7 @@ mptramp_start:
 	 * but gas cannot assemble that.  And besides, we patch the targets
 	 * in early startup and its a little clearer what we are patching.
 	 */
+	ALIGN_FOR_VENKMAN
 jmp_32:
 	.byte	0x66			/* size override to 32 bits */
 	.byte	0xea			/* opcode for far jump */
@@ -119,6 +121,7 @@ protmode:
 	 * the 4GB limit.  %ebx is still our relocation base.  We could just
 	 * subtract 3 * PAGE_SIZE, but that would be too easy.
 	 */
+	ALIGN_FOR_VENKMAN
 	leal	mptramp_pagetables-mptramp_start(%ebx),%eax
 	movl	(%eax), %eax
 	mov	%eax, %cr3

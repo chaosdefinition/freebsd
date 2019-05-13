@@ -72,6 +72,7 @@ wakeup_start:
 	/* To debug resume hangs, beep the speaker if the user requested. */
 	testb	$~0, resume_beep - wakeup_start
 	jz	1f
+	ALIGN_FOR_VENKMAN
 	movb	$0, resume_beep - wakeup_start
 
 	/* Set PIC timer2 to beep. */
@@ -140,6 +141,7 @@ wakeup_start:
 	 * but gas cannot assemble that.  And besides, we patch the targets
 	 * in early startup and its a little clearer what we are patching.
 	 */
+	ALIGN_FOR_VENKMAN
 wakeup_sw32:
 	.byte	0x66			/* size override to 32 bits */
 	.byte	0xea			/* opcode for far jump */
@@ -169,6 +171,7 @@ wakeup_32:
 	 */
 	movl	$MSR_EFER, %ecx
 	movl	wakeup_efer - wakeup_start(%ebx), %eax
+	ALIGN_FOR_VENKMAN
 	movl	wakeup_efer + 4 - wakeup_start(%ebx), %edx
 	wrmsr
 
@@ -208,6 +211,7 @@ wakeup_32:
 	 * but gas cannot assemble that.  And besides, we patch the targets
 	 * in early startup and its a little clearer what we are patching.
 	 */
+	ALIGN_FOR_VENKMAN
 wakeup_sw64:
 	.byte	0xea			/* opcode for far jump */
 	.long	wakeup_64 - wakeup_start /* offset in segment */
@@ -236,6 +240,7 @@ wakeup_64:
 	lgdt	wakeup_gdt - wakeup_start(%rbx)
 
 	/* Jump to return address. */
+	ALIGN_FOR_VENKMAN
 	VENKMAN_JMPr(rax)
 
 	.data
